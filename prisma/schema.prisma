@@ -10,22 +10,276 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Example User model for starter template
+
+
+// User model
 model User {
-  id            String   @id @default(auto()) @map("_id") @db.ObjectId
-  email         String   @unique
-  name          String?
-  password      String?
-  role          String   @default("user")
-  isActive      Boolean  @default(true)
-  isEmailVerified Boolean @default(false)
-  emailVerifiedAt DateTime?
-  lastLoginAt   DateTime?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  clerkId    String   @unique
+  firstName  String
+  lastName   String?
+  email      String   @unique
+  imageUrl   String?
+  role       String   @default("member")
+  status     Status   @default(Offline)
+  lastActive DateTime @default(now())
+  package    Package  @default(new)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relations
+  createdTeams   Team[]          @relation("TeamCreator")
+  teamMemberships TeamMember[]
+  boardMemberships BoardMember[]
+  comments       BoardComment[]
+  attachments    BoardAttachment[]
+  documents      Document[]
+  payments       Payment[]
+  sentMessages   Message[]       @relation("MessageSender")
+  receivedMessages Message[]     @relation("MessageReceiver")
+  groupMessages  GroupMessage[]
+  sentNotifications Notification[] @relation("NotificationSender")
+  receivedNotifications Notification[] @relation("NotificationRecipient")
 
   @@map("users")
 }
+
+// Team model
+model Team {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  description String?
+  type        TeamType
+  creatorId   String   @db.ObjectId
+  createdAt   DateTime @default(now())
+
+  // Relations
+  creator      User         @relation("TeamCreator", fields: [creatorId], references: [id])
+  members      TeamMember[]
+  boards       Board[]
+  groupMessages GroupMessage[]
+
+  @@map("teams")
+}
+
+// Team membership junction table
+model TeamMember {
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  teamId String @db.ObjectId
+  userId String @db.ObjectId
+
+  // Relations
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, userId])
+  @@map("team_members")
+}
+
+// Board (Task) model
+model Board {
+  id          String      @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String?
+  teamId      String      @db.ObjectId
+  status      BoardStatus @default(todo)
+  targetDate  DateTime?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  // Relations
+  team        Team              @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  members     BoardMember[]
+  comments    BoardComment[]
+  attachments BoardAttachment[]
+
+  @@map("boards")
+}
+
+// Board membership junction table
+model BoardMember {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  boardId String @db.ObjectId
+  userId  String @db.ObjectId
+
+  // Relations
+  board Board @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([boardId, userId])
+  @@map("board_members")
+}
+
+// Board comments
+model BoardComment {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  boardId   String   @db.ObjectId
+  userId    String   @db.ObjectId
+  text      String
+  createdAt DateTime @default(now())
+
+  // Relations
+  board Board @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("board_comments")
+}
+
+// Board attachments
+model BoardAttachment {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  boardId   String   @db.ObjectId
+  userId    String   @db.ObjectId
+  url       String
+  filename  String
+  createdAt DateTime @default(now())
+
+  // Relations
+  board Board @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("board_attachments")
+}
+
+// Direct Message model
+model Message {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  senderId   String
+  receiverId String
+  text       String
+  read       Boolean  @default(false)
+  timestamp  DateTime @default(now())
+
+  // Relations (using String IDs for flexibility, as in original schema)
+  sender   User @relation("MessageSender", fields: [senderId], references: [clerkId])
+  receiver User @relation("MessageReceiver", fields: [receiverId], references: [clerkId])
+
+  @@map("messages")
+}
+
+// Group Message model
+model GroupMessage {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  senderId  String   @db.ObjectId
+  groupId   String   @db.ObjectId
+  message   String
+  timestamp DateTime @default(now())
+
+  // Relations
+  sender User @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  group  Team @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@map("group_messages")
+}
+
+// Document model
+model Document {
+  id               String   @id @default(auto()) @map("_id") @db.ObjectId
+  title            String
+  content          String
+  docCreatorEmail  String
+  docCreatorId     String   @db.ObjectId
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Relations
+  creator User @relation(fields: [docCreatorId], references: [id], onDelete: Cascade)
+
+  @@map("documents")
+}
+
+// Payment model
+model Payment {
+  id              String        @id @default(auto()) @map("_id") @db.ObjectId
+  userId          String?       @db.ObjectId
+  amount          Int           // Amount in cents (minimum 100)
+  stripePaymentId String?
+  status          PaymentStatus @default(pending)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // Relations
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("payments")
+}
+
+// Notification model
+model Notification {
+  id          String           @id @default(auto()) @map("_id") @db.ObjectId
+  recipientId String           @db.ObjectId
+  senderId    String?          @db.ObjectId
+  name        String?
+  avatar      String?
+  message     String
+  type        NotificationType @default(general)
+  link        String?
+  isRead      Boolean          @default(false)
+  createdAt   DateTime         @default(now())
+
+  // Relations
+  recipient User  @relation("NotificationRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  sender    User? @relation("NotificationSender", fields: [senderId], references: [id], onDelete: SetNull)
+
+  @@map("notifications")
+}
+
+// Role model
+model Role {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String   @unique
+  permissions String[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("roles")
+}
+
+// Enums
+enum Status {
+  Online
+  Offline
+}
+
+enum Package {
+  free
+  diamond
+  platinum
+  new
+}
+
+enum TeamType {
+  teams
+  startups
+  businesses
+  remote_workers
+}
+
+enum BoardStatus {
+  todo
+  in_progress @map("in-progress")
+  done
+  blocked
+}
+
+enum PaymentStatus {
+  pending
+  succeeded
+  failed
+}
+
+enum NotificationType {
+  message
+  group_message
+  team_invite
+  board_update
+  comment
+  general
+}
+
+
+
+
 
 // OTP model for email verification
 model OTP {
@@ -41,17 +295,4 @@ model OTP {
 
   @@map("otps")
   @@index([email, type])
-}
-
-// Example Post model to demonstrate relationships
-model Post {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  title     String
-  content   String?
-  published Boolean  @default(false)
-  authorId  String   @db.ObjectId
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("posts")
 }
