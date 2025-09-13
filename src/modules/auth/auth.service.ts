@@ -13,6 +13,8 @@ import { UserService } from '../user/user.service';
 import { HashUtil } from '../../common/utils/hash.util';
 import { LoginDto, RegisterDto } from './dto/auth.dto';
 import { JwtPayload } from './strategies/jwt.strategy';
+import { OTPService, OTPType } from '../email/otp.service';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class AuthService {
@@ -20,6 +22,8 @@ export class AuthService {
     private userService: UserService,
     private jwtService: JwtService,
     private configService: ConfigService,
+    private otpService: OTPService,
+    private emailService: EmailService,
   ) {}
 
   async register(registerDto: RegisterDto) {
@@ -139,5 +143,84 @@ export class AuthService {
       }
     }
     return null;
+  }
+
+  async verifyEmail(
+    email: string,
+    otp: string,
+  ): Promise<{ success: boolean; message?: string }> {
+    // Verify OTP
+    const otpResult = await this.otpService.verifyOTP(
+      email,
+      otp,
+      OTPType.EMAIL_VERIFICATION,
+    );
+
+    if (!otpResult.valid) {
+      return {
+        success: false,
+        message: otpResult.message,
+      };
+    }
+
+    // Update user email verification status
+    const user = await this.userService.findByEmail(email);
+    if (!user) {
+      return {
+        success: false,
+        message: 'User not found',
+      };
+    }
+
+    await this.userService.update(user.id, {
+      isEmailVerified: true,
+      emailVerifiedAt: new Date(),
+    });
+
+    // Send welcome email
+    await this.emailService.sendWelcomeEmail(email, user.name || 'User');
+
+    return {
+      success: true,
+    };
+  }
+
+  async resetPassword(
+    email: string,
+    otp: string,
+    newPassword: string,
+  ): Promise<{ success: boolean; message?: string }> {
+    // Verify OTP
+    const otpResult = await this.otpService.verifyOTP(
+      email,
+      otp,
+      OTPType.PASSWORD_RESET,
+    );
+
+    if (!otpResult.valid) {
+      return {
+        success: false,
+        message: otpResult.message,
+      };
+    }
+
+    // Find user
+    const user = await this.userService.findByEmail(email);
+    if (!user) {
+      return {
+        success: false,
+        message: 'User not found',
+      };
+    }
+
+    // Hash new password and update
+    const hashedPassword = await HashUtil.hashPassword(newPassword);
+    await this.userService.update(user.id, {
+      password: hashedPassword,
+    });
+
+    return {
+      success: true,
+    };
   }
 }

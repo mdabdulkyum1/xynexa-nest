@@ -5,6 +5,7 @@ import {
   IsString,
   IsEnum,
   IsBoolean,
+  IsDateString,
 } from 'class-validator';
 import { Role } from '../../../common/decorators/roles.decorator';
 
@@ -28,6 +29,18 @@ export class CreateUserDto {
   @IsBoolean()
   @IsOptional()
   isActive?: boolean;
+
+  @IsBoolean()
+  @IsOptional()
+  isEmailVerified?: boolean;
+
+  @IsDateString()
+  @IsOptional()
+  emailVerifiedAt?: Date;
+
+  @IsDateString()
+  @IsOptional()
+  lastLoginAt?: Date;
 }
 
 export class UpdateUserDto {
@@ -46,4 +59,16 @@ export class UpdateUserDto {
   @IsBoolean()
   @IsOptional()
   isActive?: boolean;
+
+  @IsBoolean()
+  @IsOptional()
+  isEmailVerified?: boolean;
+
+  @IsDateString()
+  @IsOptional()
+  emailVerifiedAt?: Date;
+
+  @IsDateString()
+  @IsOptional()
+  lastLoginAt?: Date;
 }

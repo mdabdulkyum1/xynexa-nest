@@ -1,0 +1,21 @@
+<div class="greeting">
+    Hello {{userName}}!
+</div>
+
+<div class="message">
+    To complete your email verification, please use the verification code below:
+</div>
+
+<div class="otp-container">
+    <div style="font-size: 18px; margin-bottom: 10px; color: #2c3e50;">Your Verification Code</div>
+    <div class="otp-code">{{otp}}</div>
+    <div class="otp-validity">This code will expire in {{expiryMinutes}} minutes</div>
+</div>
+
+<div class="warning">
+    <strong>Security Notice:</strong> Never share this code with anyone. {{appName}} will never ask for your verification code.
+</div>
+
+<div class="message">
+    If you didn't request this verification code, please ignore this email. Your account remains secure.
+</div>
