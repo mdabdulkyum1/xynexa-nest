@@ -54,7 +54,7 @@ export class EmailService {
   private initializeSMTP() {
     const smtpConfig = this.configService.get('email.smtp');
     
-    this.transporter = nodemailer.createTransporter({
+    this.transporter = nodemailer.createTransport({
       host: smtpConfig.host,
       port: smtpConfig.port,
       secure: smtpConfig.secure,
