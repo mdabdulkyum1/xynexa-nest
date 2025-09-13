@@ -1,4 +1,12 @@
-import { IsEmail, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsEnum,
+  IsBoolean,
+} from 'class-validator';
+import { Role } from '../../../common/decorators/roles.decorator';
 
 export class CreateUserDto {
   @IsEmail()
@@ -8,6 +16,18 @@ export class CreateUserDto {
   @IsString()
   @IsOptional()
   name?: string;
+
+  @IsString()
+  @IsOptional()
+  password?: string;
+
+  @IsEnum(Role)
+  @IsOptional()
+  role?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  isActive?: boolean;
 }
 
 export class UpdateUserDto {
@@ -18,4 +38,12 @@ export class UpdateUserDto {
   @IsString()
   @IsOptional()
   name?: string;
+
+  @IsEnum(Role)
+  @IsOptional()
+  role?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  isActive?: boolean;
 }
