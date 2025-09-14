@@ -19,6 +19,7 @@ model User {
   firstName  String
   lastName   String?
   email      String   @unique
+  password   String
   imageUrl   String?
   role       String   @default("member")
   status     Status   @default(Offline)
