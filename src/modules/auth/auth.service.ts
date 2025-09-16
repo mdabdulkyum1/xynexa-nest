@@ -38,9 +38,12 @@ export class AuthService {
 
     // Create user
     const user = await this.userService.create({
+      clerkId: registerDto.clerkId,
+      firstName: registerDto.firstName,
+      lastName: registerDto.lastName,
       email: registerDto.email,
-      name: registerDto.name,
       password: hashedPassword,
+      imageUrl: registerDto.imageUrl,
       role: registerDto.role || 'user',
     });
 
@@ -51,7 +54,8 @@ export class AuthService {
       user: {
         id: user.id,
         email: user.email,
-        name: user.name,
+        firstName: user.firstName,
+        lastName: user.lastName,
         role: user.role,
       },
       ...tokens,
@@ -82,7 +86,8 @@ export class AuthService {
       user: {
         id: user.id,
         email: user.email,
-        name: user.name,
+        firstName: user.firstName,
+        lastName: user.lastName,
         role: user.role,
       },
       ...tokens,
@@ -137,7 +142,6 @@ export class AuthService {
         user.password,
       );
       if (isPasswordValid) {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { password, ...result } = user;
         return result;
       }
@@ -178,7 +182,7 @@ export class AuthService {
     });
 
     // Send welcome email
-    await this.emailService.sendWelcomeEmail(email, user.name || 'User');
+    await this.emailService.sendWelcomeEmail(email, user.firstName || 'User');
 
     return {
       success: true,

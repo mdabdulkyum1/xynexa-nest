@@ -10,17 +10,29 @@ import {
 import { Role } from '../../../common/decorators/roles.decorator';
 
 export class CreateUserDto {
+  @IsString()
+  @IsNotEmpty()
+  clerkId: string;
+
+  @IsString()
+  @IsNotEmpty()
+  firstName: string;
+
+  @IsString()
+  @IsOptional()
+  lastName?: string;
+
   @IsEmail()
   @IsNotEmpty()
   email: string;
 
   @IsString()
   @IsOptional()
-  name?: string;
+  password?: string;
 
   @IsString()
   @IsOptional()
-  password?: string;
+  imageUrl?: string;
 
   @IsEnum(Role)
   @IsOptional()
@@ -44,17 +56,25 @@ export class CreateUserDto {
 }
 
 export class UpdateUserDto {
+  @IsString()
+  @IsOptional()
+  firstName?: string;
+
+  @IsString()
+  @IsOptional()
+  lastName?: string;
+
   @IsEmail()
   @IsOptional()
   email?: string;
 
   @IsString()
   @IsOptional()
-  name?: string;
+  password?: string;
 
   @IsString()
   @IsOptional()
-  password?: string;
+  imageUrl?: string;
 
   @IsEnum(Role)
   @IsOptional()

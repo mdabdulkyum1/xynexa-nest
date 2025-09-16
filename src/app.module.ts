@@ -4,6 +4,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { UserModule } from './modules/user/user.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { WebSocketModule } from './modules/websocket/websocket.module';
+import { KeepAliveService } from './common/keepAlive/keep-alive.service';
 import { CoreModule } from './core/core.module';
 import { HealthController } from './health/health.controller';
 import { CoreController } from './core/core.controller';
@@ -26,6 +27,6 @@ import emailConfig from './config/email.config';
     WebSocketModule,
   ],
   controllers: [HealthController, CoreController],
-  providers: [],
+  providers: [KeepAliveService],
 })
 export class AppModule {}

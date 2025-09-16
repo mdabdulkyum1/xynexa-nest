@@ -26,9 +26,11 @@ export class OTPService {
     // Generate OTP
     const otp = this.generateOTP();
     const hashedOtp = await HashUtil.hashPassword(otp);
-    
+
     // Get expiry time
-    const expiryMinutes = this.configService.get<number>('email.otp.expiryMinutes');
+    const expiryMinutes = this.configService.get<number>(
+      'email.otp.expiryMinutes',
+    );
     const expiresAt = new Date(Date.now() + expiryMinutes * 60 * 1000);
 
     // Clean up old OTPs for this email and type
@@ -45,7 +47,8 @@ export class OTPService {
     });
 
     // Send OTP via email
-    const emailType = type === OTPType.PASSWORD_RESET ? 'password_reset' : 'verification';
+    const emailType =
+      type === OTPType.PASSWORD_RESET ? 'password_reset' : 'verification';
     return this.emailService.sendOTPEmail(email, otp, emailType);
   }
 
@@ -70,9 +73,9 @@ export class OTPService {
     });
 
     if (!otpRecord) {
-      return { 
-        valid: false, 
-        message: 'Invalid or expired OTP' 
+      return {
+        valid: false,
+        message: 'Invalid or expired OTP',
       };
     }
 
@@ -83,10 +86,10 @@ export class OTPService {
         where: { id: otpRecord.id },
         data: { isUsed: true },
       });
-      
-      return { 
-        valid: false, 
-        message: `Too many attempts. Please request a new OTP` 
+
+      return {
+        valid: false,
+        message: `Too many attempts. Please request a new OTP`,
       };
     }
 
@@ -109,9 +112,9 @@ export class OTPService {
       return { valid: true };
     }
 
-    return { 
-      valid: false, 
-      message: `Invalid OTP. ${maxAttempts - otpRecord.attempts - 1} attempts remaining` 
+    return {
+      valid: false,
+      message: `Invalid OTP. ${maxAttempts - otpRecord.attempts - 1} attempts remaining`,
     };
   }
 
@@ -119,7 +122,12 @@ export class OTPService {
     email: string,
     type: OTPType,
     userName?: string,
-  ): Promise<{ success: boolean; message: string; canResend?: boolean; waitTime?: number }> {
+  ): Promise<{
+    success: boolean;
+    message: string;
+    canResend?: boolean;
+    waitTime?: number;
+  }> {
     // Check if there's a recent OTP (within 1 minute)
     const recentOTP = await this.prisma.oTP.findFirst({
       where: {
@@ -135,7 +143,8 @@ export class OTPService {
     });
 
     if (recentOTP) {
-      const waitTime = 60 - Math.floor((Date.now() - recentOTP.createdAt.getTime()) / 1000);
+      const waitTime =
+        60 - Math.floor((Date.now() - recentOTP.createdAt.getTime()) / 1000);
       return {
         success: false,
         message: `Please wait ${waitTime} seconds before requesting a new OTP`,
@@ -165,11 +174,11 @@ export class OTPService {
 
     // Generate and send new OTP
     const success = await this.generateAndSendOTP(email, type, userName);
-    
+
     return {
       success,
-      message: success 
-        ? 'OTP has been sent to your email' 
+      message: success
+        ? 'OTP has been sent to your email'
         : 'Failed to send OTP. Please try again',
       canResend: true,
     };
@@ -178,11 +187,11 @@ export class OTPService {
   private generateOTP(): string {
     const length = this.configService.get<number>('email.otp.length');
     let otp = '';
-    
+
     for (let i = 0; i < length; i++) {
       otp += Math.floor(Math.random() * 10);
     }
-    
+
     return otp;
   }
 

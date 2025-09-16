@@ -92,9 +92,9 @@ export class AuthController {
       sendOTPDto.email,
       OTPType.EMAIL_VERIFICATION,
     );
-    
+
     return {
-      message: result 
+      message: result
         ? 'Verification OTP sent successfully'
         : 'Failed to send OTP. Please try again',
       success: result,
@@ -109,11 +109,9 @@ export class AuthController {
       verifyOTPDto.email,
       verifyOTPDto.otp,
     );
-    
+
     return {
-      message: result.success 
-        ? 'Email verified successfully'
-        : result.message,
+      message: result.success ? 'Email verified successfully' : result.message,
       success: result.success,
     };
   }
@@ -126,7 +124,7 @@ export class AuthController {
       sendOTPDto.email,
       OTPType.EMAIL_VERIFICATION,
     );
-    
+
     return {
       message: result.message,
       success: result.success,
@@ -143,9 +141,9 @@ export class AuthController {
       forgotPasswordDto.email,
       OTPType.PASSWORD_RESET,
     );
-    
+
     return {
-      message: result 
+      message: result
         ? 'Password reset OTP sent successfully'
         : 'Failed to send OTP. Please try again',
       success: result,
@@ -161,11 +159,9 @@ export class AuthController {
       resetPasswordDto.otp,
       resetPasswordDto.newPassword,
     );
-    
+
     return {
-      message: result.success 
-        ? 'Password reset successfully'
-        : result.message,
+      message: result.success ? 'Password reset successfully' : result.message,
       success: result.success,
     };
   }
@@ -175,10 +171,10 @@ export class AuthController {
   @Get('test-email')
   async testEmail() {
     const isConnected = await this.emailService.testEmailConnection();
-    
+
     return {
-      message: isConnected 
-        ? 'Email service is connected' 
+      message: isConnected
+        ? 'Email service is connected'
         : 'Email service connection failed',
       connected: isConnected,
     };

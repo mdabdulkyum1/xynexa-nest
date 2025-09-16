@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
+
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
@@ -30,7 +29,10 @@ export class EmailService {
   private readonly templatesPath: string;
 
   constructor(private configService: ConfigService) {
-    this.templatesPath = path.join(process.cwd(), 'src/modules/email/templates');
+    this.templatesPath = path.join(
+      process.cwd(),
+      'src/modules/email/templates',
+    );
     this.initializeEmailProvider();
   }
 
@@ -53,7 +55,7 @@ export class EmailService {
 
   private initializeSMTP() {
     const smtpConfig = this.configService.get('email.smtp');
-    
+
     this.transporter = nodemailer.createTransport({
       host: smtpConfig.host,
       port: smtpConfig.port,
@@ -98,10 +100,16 @@ export class EmailService {
     }
   }
 
-  async sendTemplateEmail(to: string, templateData: EmailTemplate): Promise<boolean> {
+  async sendTemplateEmail(
+    to: string,
+    templateData: EmailTemplate,
+  ): Promise<boolean> {
     try {
-      const html = await this.renderTemplate(templateData.template, templateData.data);
-      
+      const html = await this.renderTemplate(
+        templateData.template,
+        templateData.data,
+      );
+
       return this.sendEmail({
         to,
         subject: templateData.subject,
@@ -114,23 +122,29 @@ export class EmailService {
     }
   }
 
-  private async renderTemplate(templateName: string, data: Record<string, any>): Promise<string> {
+  private async renderTemplate(
+    templateName: string,
+    data: Record<string, any>,
+  ): Promise<string> {
     try {
       // Load base template
       const baseTemplatePath = path.join(this.templatesPath, 'base.hbs');
       const baseTemplate = fs.readFileSync(baseTemplatePath, 'utf8');
-      
+
       // Load specific content template
-      const contentTemplatePath = path.join(this.templatesPath, `${templateName}.hbs`);
+      const contentTemplatePath = path.join(
+        this.templatesPath,
+        `${templateName}.hbs`,
+      );
       const contentTemplate = fs.readFileSync(contentTemplatePath, 'utf8');
-      
+
       // Compile templates
       const baseCompiled = handlebars.compile(baseTemplate);
       const contentCompiled = handlebars.compile(contentTemplate);
-      
+
       // Render content template
       const content = contentCompiled(data);
-      
+
       // Merge with base template
       const finalData = {
         ...data,
@@ -140,7 +154,7 @@ export class EmailService {
         supportEmail: 'support@xynexa.com',
         year: new Date().getFullYear(),
       };
-      
+
       return baseCompiled(finalData);
     } catch (error) {
       this.logger.error(`Failed to render template ${templateName}:`, error);
@@ -149,12 +163,21 @@ export class EmailService {
   }
 
   private stripHtml(html: string): string {
-    return html.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+    return html
+      .replace(/<[^>]*>/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 
-  async sendOTPEmail(to: string, otp: string, type: 'verification' | 'password_reset' = 'verification'): Promise<boolean> {
+  async sendOTPEmail(
+    to: string,
+    otp: string,
+    type: 'verification' | 'password_reset' = 'verification',
+  ): Promise<boolean> {
     const userName = to.split('@')[0]; // Simple name extraction
-    const expiryMinutes = this.configService.get<number>('email.otp.expiryMinutes');
+    const expiryMinutes = this.configService.get<number>(
+      'email.otp.expiryMinutes',
+    );
 
     const templates = {
       verification: {
@@ -194,7 +217,7 @@ export class EmailService {
   async testEmailConnection(): Promise<boolean> {
     try {
       const provider = this.configService.get<string>('email.provider');
-      
+
       if (provider === 'sendgrid') {
         // SendGrid doesn't have a verify method, so we'll just check if API key is set
         const apiKey = this.configService.get<string>('email.sendgrid.apiKey');

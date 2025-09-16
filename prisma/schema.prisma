@@ -19,8 +19,10 @@ model User {
   firstName  String
   lastName   String?
   email      String   @unique
-  password   String
+  password   String?
   imageUrl   String?
+  isEmailVerified Boolean  @default(false)
+  emailVerifiedAt DateTime?
   role       String   @default("member")
   status     Status   @default(Offline)
   lastActive DateTime @default(now())

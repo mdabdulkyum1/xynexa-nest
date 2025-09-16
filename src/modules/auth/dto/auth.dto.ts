@@ -9,6 +9,18 @@ import {
 import { Role } from '../../../common/decorators/roles.decorator';
 
 export class RegisterDto {
+  @IsString()
+  @IsNotEmpty()
+  clerkId: string;
+
+  @IsString()
+  @IsNotEmpty()
+  firstName: string;
+
+  @IsString()
+  @IsOptional()
+  lastName?: string;
+
   @IsEmail()
   @IsNotEmpty()
   email: string;
@@ -20,7 +32,7 @@ export class RegisterDto {
 
   @IsString()
   @IsOptional()
-  name?: string;
+  imageUrl?: string;
 
   @IsEnum(Role)
   @IsOptional()
