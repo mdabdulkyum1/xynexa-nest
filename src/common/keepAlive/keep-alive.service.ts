@@ -1,7 +1,7 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 @Injectable()
 export class KeepAliveService implements OnModuleInit {
-  private readonly url = 'https://your-app.onrender.com/health';
+  private readonly url = 'https://xynexa-nest.onrender.com/api/v1/health';
 
   onModuleInit() {
     console.log('KeepAliveService started...');
@@ -10,7 +10,7 @@ export class KeepAliveService implements OnModuleInit {
         void this.performHealthCheck();
       },
       5 * 60 * 1000,
-    ); // প্রতি 5 মিনিটে ping
+    );
   }
 
   private async performHealthCheck(): Promise<void> {
