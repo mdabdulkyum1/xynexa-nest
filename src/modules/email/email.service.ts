@@ -129,14 +129,17 @@ export class EmailService {
     try {
       // Load base template
       const baseTemplatePath = path.join(this.templatesPath, 'base.hbs');
-      const baseTemplate = fs.readFileSync(baseTemplatePath, 'utf8');
+      const baseTemplate = await fs.promises.readFile(baseTemplatePath, 'utf8');
 
       // Load specific content template
       const contentTemplatePath = path.join(
         this.templatesPath,
         `${templateName}.hbs`,
       );
-      const contentTemplate = fs.readFileSync(contentTemplatePath, 'utf8');
+      const contentTemplate = await fs.promises.readFile(
+        contentTemplatePath,
+        'utf8',
+      );
 
       // Compile templates
       const baseCompiled = handlebars.compile(baseTemplate);

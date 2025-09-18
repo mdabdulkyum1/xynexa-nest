@@ -1,8 +1,10 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EmailService } from './email.service';
 import { HashUtil } from '../../common/utils/hash.util';
+import type { OTP } from '@prisma/client';
 
 export enum OTPType {
   EMAIL_VERIFICATION = 'email_verification',
@@ -21,16 +23,15 @@ export class OTPService {
   async generateAndSendOTP(
     email: string,
     type: OTPType,
-    userName?: string,
+    _userName?: string,
   ): Promise<boolean> {
     // Generate OTP
-    const otp = this.generateOTP();
-    const hashedOtp = await HashUtil.hashPassword(otp);
+    const OTP = this.generateOTP();
+    const hashedOtp = await HashUtil.hashPassword(OTP);
 
     // Get expiry time
-    const expiryMinutes = this.configService.get<number>(
-      'email.otp.expiryMinutes',
-    );
+    const expiryMinutes =
+      this.configService.get<number>('email.OTP.expiryMinutes') || 10; // Default to 10 minutes if not configured
     const expiresAt = new Date(Date.now() + expiryMinutes * 60 * 1000);
 
     // Clean up old OTPs for this email and type
@@ -49,16 +50,16 @@ export class OTPService {
     // Send OTP via email
     const emailType =
       type === OTPType.PASSWORD_RESET ? 'password_reset' : 'verification';
-    return this.emailService.sendOTPEmail(email, otp, emailType);
+    return this.emailService.sendOTPEmail(email, OTP, emailType);
   }
 
   async verifyOTP(
     email: string,
-    otp: string,
+    OTP: string,
     type: OTPType,
   ): Promise<{ valid: boolean; message?: string }> {
     // Find the most recent unused OTP
-    const otpRecord = await this.prisma.oTP.findFirst({
+    const otpRecord: OTP | null = await this.prisma.oTP.findFirst({
       where: {
         email,
         type,
@@ -80,7 +81,8 @@ export class OTPService {
     }
 
     // Check max attempts
-    const maxAttempts = this.configService.get<number>('email.otp.maxAttempts');
+    const maxAttempts =
+      this.configService.get<number>('email.OTP.maxAttempts') || 3; // Default to 3 attempts
     if (otpRecord.attempts >= maxAttempts) {
       await this.prisma.oTP.update({
         where: { id: otpRecord.id },
@@ -100,7 +102,7 @@ export class OTPService {
     });
 
     // Verify OTP
-    const isValid = await HashUtil.comparePassword(otp, otpRecord.otp);
+    const isValid = await HashUtil.comparePassword(OTP, otpRecord.otp);
 
     if (isValid) {
       // Mark as used
@@ -129,7 +131,7 @@ export class OTPService {
     waitTime?: number;
   }> {
     // Check if there's a recent OTP (within 1 minute)
-    const recentOTP = await this.prisma.oTP.findFirst({
+    const recentOTP: OTP | null = await this.prisma.oTP.findFirst({
       where: {
         email,
         type,
@@ -185,14 +187,14 @@ export class OTPService {
   }
 
   private generateOTP(): string {
-    const length = this.configService.get<number>('email.otp.length');
-    let otp = '';
+    const length = this.configService.get<number>('email.OTP.length') || 6; // Default to 6 digits
+    let OTP = '';
 
     for (let i = 0; i < length; i++) {
-      otp += Math.floor(Math.random() * 10);
+      OTP += Math.floor(Math.random() * 10);
     }
 
-    return otp;
+    return OTP;
   }
 
   private async cleanupOldOTPs(email: string, type: OTPType): Promise<void> {
@@ -216,6 +218,15 @@ export class OTPService {
         createdAt: {
           lt: new Date(Date.now() - 24 * 60 * 60 * 1000),
         },
+      },
+    });
+  }
+
+  async deleteAllByEmail(email: string, type: OTPType): Promise<void> {
+    await this.prisma.oTP.deleteMany({
+      where: {
+        email,
+        type,
       },
     });
   }

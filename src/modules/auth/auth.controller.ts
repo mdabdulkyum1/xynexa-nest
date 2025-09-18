@@ -66,7 +66,7 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Get('profile')
-  async getProfile(@CurrentUser() user: any) {
+  getProfile(@CurrentUser() user: { id: string; email: string; role: string }) {
     return {
       message: 'Profile retrieved successfully',
       data: user,
@@ -76,7 +76,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @Post('logout')
   @HttpCode(HttpStatus.OK)
-  async logout() {
+  logout() {
     // In a real application, you might want to blacklist the token
     return {
       message: 'Logout successful',

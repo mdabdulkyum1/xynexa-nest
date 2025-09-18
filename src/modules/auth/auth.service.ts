@@ -44,7 +44,7 @@ export class AuthService {
       email: registerDto.email,
       password: hashedPassword,
       imageUrl: registerDto.imageUrl,
-      role: registerDto.role || 'user',
+      role: 'member',
     });
 
     // Generate tokens
@@ -105,12 +105,17 @@ export class AuthService {
 
       const tokens = await this.generateTokens(user);
       return tokens;
-    } catch (error) {
+    } catch {
       throw new UnauthorizedException('Invalid refresh token');
     }
   }
 
-  private async generateTokens(user: any) {
+  private async generateTokens(user: any): Promise<{
+    accessToken: string;
+    refreshToken: string;
+    tokenType: string;
+    expiresIn: string;
+  }> {
     const payload: JwtPayload = {
       sub: user.id,
       email: user.email,
@@ -181,6 +186,9 @@ export class AuthService {
       emailVerifiedAt: new Date(),
     });
 
+    // Clean up all OTPs for this email and type after successful verification
+    await this.otpService.deleteAllByEmail(email, OTPType.EMAIL_VERIFICATION);
+
     // Send welcome email
     await this.emailService.sendWelcomeEmail(email, user.firstName || 'User');
 
@@ -222,6 +230,9 @@ export class AuthService {
     await this.userService.update(user.id, {
       password: hashedPassword,
     });
+
+    // Clean up all OTPs for this email and type after successful password reset
+    await this.otpService.deleteAllByEmail(email, OTPType.PASSWORD_RESET);
 
     return {
       success: true,

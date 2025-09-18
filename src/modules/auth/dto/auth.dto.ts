@@ -4,9 +4,7 @@ import {
   IsOptional,
   IsString,
   MinLength,
-  IsEnum,
 } from 'class-validator';
-import { Role } from '../../../common/decorators/roles.decorator';
 
 export class RegisterDto {
   @IsString()
@@ -33,10 +31,6 @@ export class RegisterDto {
   @IsString()
   @IsOptional()
   imageUrl?: string;
-
-  @IsEnum(Role)
-  @IsOptional()
-  role?: Role;
 }
 
 export class LoginDto {
