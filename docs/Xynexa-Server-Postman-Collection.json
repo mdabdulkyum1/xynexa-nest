@@ -1,0 +1,1035 @@
+{
+  "info": {
+    "name": "Xynexa Server API",
+    "description": "Complete API documentation for Xynexa Team Collaboration Server",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "apiUrl",
+      "value": "{{baseUrl}}/api",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "🏠 Server Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/",
+              "host": ["{{baseUrl}}"],
+              "path": [""]
+            },
+            "description": "Check if server is running"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "👤 User Management",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"password123\",\n  \"role\": \"user\"\n}"
+            },
+            "url": {
+              "raw": "{{apiUrl}}/register",
+              "host": ["{{apiUrl}}"],
+              "path": ["register"]
+            },
+            "description": "Register a new user"
+          },
+          "response": []
+        },
+        {
+          "name": "Login User",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john@example.com\",\n  \"isOnline\": true\n}"
+            },
+            "url": {
+              "raw": "{{apiUrl}}/loginUser",
+              "host": ["{{apiUrl}}"],
+              "path": ["loginUser"]
+            },
+            "description": "Set user online status"
+          },
+          "response": []
+        },
+        {
+          "name": "Logout User",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john@example.com\",\n  \"isOnline\": false\n}"
+            },
+            "url": {
+              "raw": "{{apiUrl}}/offlineUser",
+              "host": ["{{apiUrl}}"],
+              "path": ["offlineUser"]
+            },
+            "description": "Set user offline status"
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{apiUrl}}/users",
+              "host": ["{{apiUrl}}"],
+              "path": ["users"]
+            },
+            "description": "Get all registered users"
+          },
+          "response": []
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{apiUrl}}/users/:id",
+              "host": ["{{apiUrl}}"],
+              "path": ["users", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "userId123",
+                  "description": "User ID"
+                }
+              ]
+            },
+            "description": "Get user by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Get User by Email",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{apiUrl}}/users/email/:email",
+              "host": ["{{apiUrl}}"],
+              "path": ["users", "email", ":email"],
+              "variable": [
+                {
+                  "key": "email",
+                  "value": "john@example.com",
+                  "description": "User email"
+                }
+              ]
+            },
+            "description": "Get user by email address"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Online Users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{apiUrl}}/online/users/:userEmail",
+              "host": ["{{apiUrl}}"],
+              "path": ["online", "users", ":userEmail"],
+              "variable": [
+                {
+                  "key": "userEmail",
+                  "value": "john@example.com",
+                  "description": "User email to get online status"
+                }
+              ]
+            },
+            "description": "Get online users for a specific user"
+          },
+          "response": []
+        },
+        {
+          "name": "Update User Package",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john@example.com\",\n  \"package\": \"premium\"\n}"
+            },
+            "url": {
+              "raw": "{{apiUrl}}/packageUpdate",
+              "host": ["{{apiUrl}}"],
+              "path": ["packageUpdate"]
+            },
+            "description": "Update user's subscription package"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "👥 Team Management",
+      "item": [
+        {
+          "name": "Create Team",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Development Team\",\n  \"description\": \"Main development team\",\n  \"createdBy\": \"john@example.com\",\n  \"members\": [\"john@example.com\", \"jane@example.com\"]\n}"
+            },
+            "url": {
+              "raw": "{{apiUrl}}/teams/create",
+              "host": ["{{apiUrl}}"],
+              "path": ["teams", "create"]
+            },
+            "description": "Create a new team"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Team by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{apiUrl}}/teams/:id",
+              "host": ["{{apiUrl}}"],
+              "path": ["teams", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "teamId123",
+                  "description": "Team ID"
+                }
+              ]
+            },
+            "description": "Get team details by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Team",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Team Name\",\n  \"description\": \"Updated description\"\n}"
+            },
+            "url": {
+              "raw": "{{apiUrl}}/teams/:id",
+              "host": ["{{apiUrl}}"],
+              "path": ["teams", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "teamId123",
+                  "description": "Team ID"
+                }
+              ]
+            },
+            "description": "Update team information"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Team",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{apiUrl}}/teams/:id",
+              "host": ["{{apiUrl}}"],
+              "path": ["teams", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "teamId123",
+                  "description": "Team ID"
+                }
+              ]
+            },
+            "description": "Delete a team"
+          },
+          "response": []
+        },
+        {
+          "name": "Add Member to Team",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"teamId\": \"teamId123\",\n  \"memberEmail\": \"newmember@example.com\",\n  \"role\": \"member\"\n}"
+            },
+            "url": {
+              "raw": "{{apiUrl}}/teams/addMember",
+              "host": ["{{apiUrl}}"],
+              "path": ["teams", "addMember"]
+            },
+            "description": "Add a member to team"
+          },
+          "response": []
+        },
+        {
+          "name": "Get User Teams by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{apiUrl}}/teams/user/teams/:userId",
+              "host": ["{{apiUrl}}"],
+              "path": ["teams", "user", "teams", ":userId"],
+              "variable": [
+                {
+                  "key": "userId",
+                  "value": "userId123",
+                  "description": "User ID"
+                }
+              ]
+            },
+            "description": "Get all teams for a user by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Get User Teams by Email",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{apiUrl}}/teams/user/teams/email/:userEmail",
+              "host": ["{{apiUrl}}"],
+              "path": ["teams", "user", "teams", "email", ":userEmail"],
+              "variable": [
+                {
+                  "key": "userEmail",
+                  "value": "john@example.com",
+                  "description": "User email"
+                }
+              ]
+            },
+            "description": "Get all teams for a user by email"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Teams for Group Chat",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{apiUrl}}/teams/get-teams-by-email/:userEmail",
+              "host": ["{{apiUrl}}"],
+              "path": ["teams", "get-teams-by-email", ":userEmail"],
+              "variable": [
+                {
+                  "key": "userEmail",
+                  "value": "john@example.com",
+                  "description": "User email"
+                }
+              ]
+            },
+            "description": "Get teams by email for group chat functionality"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "💬 Messages",
+      "item": [
+        {
+          "name": "Get Messages",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{apiUrl}}/messages?sender=john@example.com&receiver=jane@example.com",
+              "host": ["{{apiUrl}}"],
+              "path": ["messages"],
+              "query": [
+                {
+                  "key": "sender",
+                  "value": "john@example.com",
+                  "description": "Sender email"
+                },
+                {
+                  "key": "receiver",
+                  "value": "jane@example.com",
+                  "description": "Receiver email"
+                }
+              ]
+            },
+            "description": "Get messages between two users"
+          },
+          "response": []
+        },
+        {
+          "name": "Send Message",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sender\": \"john@example.com\",\n  \"receiver\": \"jane@example.com\",\n  \"message\": \"Hello, how are you?\",\n  \"timestamp\": \"2024-01-01T10:00:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{apiUrl}}/messages/send",
+              "host": ["{{apiUrl}}"],
+              "path": ["messages", "send"]
+            },
+            "description": "Send a new message"
+          },
+          "response": []
+        },
+        {
+          "name": "Mark as Read",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"messageId\": \"messageId123\",\n  \"readBy\": \"john@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{apiUrl}}/read",
+              "host": ["{{apiUrl}}"],
+              "path": ["read"]
+            },
+            "description": "Mark message as read"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Message",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{apiUrl}}/messages/:id",
+              "host": ["{{apiUrl}}"],
+              "path": ["messages", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "messageId123",
+                  "description": "Message ID"
+                }
+              ]
+            },
+            "description": "Delete a message"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "💬 Group Messages",
+      "item": [
+        {
+          "name": "Send Group Message",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sender\": \"john@example.com\",\n  \"groupId\": \"teamId123\",\n  \"message\": \"Hello team!\",\n  \"timestamp\": \"2024-01-01T10:00:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{apiUrl}}/groupMessage/send",
+              "host": ["{{apiUrl}}"],
+              "path": ["groupMessage", "send"]
+            },
+            "description": "Send message to group/team"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Group Messages",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{apiUrl}}/groupMessage/:groupId",
+              "host": ["{{apiUrl}}"],
+              "path": ["groupMessage", ":groupId"],
+              "variable": [
+                {
+                  "key": "groupId",
+                  "value": "teamId123",
+                  "description": "Group/Team ID"
+                }
+              ]
+            },
+            "description": "Get all messages for a group/team"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "📋 Boards & Tasks",
+      "item": [
+        {
+          "name": "Create Board",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Project Setup\",\n  \"description\": \"Setup initial project structure\",\n  \"teamId\": \"teamId123\",\n  \"assignedTo\": \"john@example.com\",\n  \"priority\": \"high\",\n  \"status\": \"pending\",\n  \"dueDate\": \"2024-01-15T10:00:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{apiUrl}}/boards/create",
+              "host": ["{{apiUrl}}"],
+              "path": ["boards", "create"]
+            },
+            "description": "Create a new task board"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Board by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{apiUrl}}/boards/:id",
+              "host": ["{{apiUrl}}"],
+              "path": ["boards", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "boardId123",
+                  "description": "Board ID"
+                }
+              ]
+            },
+            "description": "Get board details by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Board",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Board Title\",\n  \"description\": \"Updated description\",\n  \"status\": \"in-progress\"\n}"
+            },
+            "url": {
+              "raw": "{{apiUrl}}/boards/:id",
+              "host": ["{{apiUrl}}"],
+              "path": ["boards", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "boardId123",
+                  "description": "Board ID"
+                }
+              ]
+            },
+            "description": "Update board information"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Board",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{apiUrl}}/boards/:id",
+              "host": ["{{apiUrl}}"],
+              "path": ["boards", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "boardId123",
+                  "description": "Board ID"
+                }
+              ]
+            },
+            "description": "Delete a board"
+          },
+          "response": []
+        },
+        {
+          "name": "Add Member to Board",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"boardId\": \"boardId123\",\n  \"memberEmail\": \"jane@example.com\",\n  \"role\": \"contributor\"\n}"
+            },
+            "url": {
+              "raw": "{{apiUrl}}/boards/members",
+              "host": ["{{apiUrl}}"],
+              "path": ["boards", "members"]
+            },
+            "description": "Add member to board"
+          },
+          "response": []
+        },
+        {
+          "name": "Add Comment to Board",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"boardId\": \"boardId123\",\n  \"comment\": \"This task is progressing well\",\n  \"author\": \"john@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{apiUrl}}/boards/comments",
+              "host": ["{{apiUrl}}"],
+              "path": ["boards", "comments"]
+            },
+            "description": "Add comment to board"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Board Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"completed\"\n}"
+            },
+            "url": {
+              "raw": "{{apiUrl}}/boards/:boardId/status",
+              "host": ["{{apiUrl}}"],
+              "path": ["boards", ":boardId", "status"],
+              "variable": [
+                {
+                  "key": "boardId",
+                  "value": "boardId123",
+                  "description": "Board ID"
+                }
+              ]
+            },
+            "description": "Update board status"
+          },
+          "response": []
+        },
+        {
+          "name": "Add Attachment to Board",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"boardId\": \"boardId123\",\n  \"fileName\": \"document.pdf\",\n  \"fileUrl\": \"https://example.com/document.pdf\",\n  \"uploadedBy\": \"john@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{apiUrl}}/boards/attachments",
+              "host": ["{{apiUrl}}"],
+              "path": ["boards", "attachments"]
+            },
+            "description": "Add attachment to board"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Boards by Team ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{apiUrl}}/boards/team/:teamId",
+              "host": ["{{apiUrl}}"],
+              "path": ["boards", "team", ":teamId"],
+              "variable": [
+                {
+                  "key": "teamId",
+                  "value": "teamId123",
+                  "description": "Team ID"
+                }
+              ]
+            },
+            "description": "Get all boards for a team"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Boards by User Email",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{apiUrl}}/boards/task/email/:email",
+              "host": ["{{apiUrl}}"],
+              "path": ["boards", "task", "email", ":email"],
+              "variable": [
+                {
+                  "key": "email",
+                  "value": "john@example.com",
+                  "description": "User email"
+                }
+              ]
+            },
+            "description": "Get all boards assigned to user"
+          },
+          "response": []
+        },
+        {
+          "name": "Get User Task Summary",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{apiUrl}}/boards/task/user/full-summary/:email",
+              "host": ["{{apiUrl}}"],
+              "path": ["boards", "task", "user", "full-summary", ":email"],
+              "variable": [
+                {
+                  "key": "email",
+                  "value": "john@example.com",
+                  "description": "User email"
+                }
+              ]
+            },
+            "description": "Get user's overall and team task summary"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "📄 Documents",
+      "item": [
+        {
+          "name": "Create Document",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Project Requirements\",\n  \"content\": \"This document contains project requirements...\",\n  \"createdBy\": \"john@example.com\",\n  \"teamId\": \"teamId123\",\n  \"tags\": [\"requirements\", \"project\"]\n}"
+            },
+            "url": {
+              "raw": "{{apiUrl}}/documents/create",
+              "host": ["{{apiUrl}}"],
+              "path": ["documents", "create"]
+            },
+            "description": "Create a new document"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Documents by Email",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{apiUrl}}/documents/getAllDoc?email=john@example.com",
+              "host": ["{{apiUrl}}"],
+              "path": ["documents", "getAllDoc"],
+              "query": [
+                {
+                  "key": "email",
+                  "value": "john@example.com",
+                  "description": "User email"
+                }
+              ]
+            },
+            "description": "Get all documents for a user"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Document by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{apiUrl}}/documents/document/:id",
+              "host": ["{{apiUrl}}"],
+              "path": ["documents", "document", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "documentId123",
+                  "description": "Document ID"
+                }
+              ]
+            },
+            "description": "Get document by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Document",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Document Title\",\n  \"content\": \"Updated content...\",\n  \"tags\": [\"updated\", \"project\"]\n}"
+            },
+            "url": {
+              "raw": "{{apiUrl}}/documents/update/:id",
+              "host": ["{{apiUrl}}"],
+              "path": ["documents", "update", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "documentId123",
+                  "description": "Document ID"
+                }
+              ]
+            },
+            "description": "Update document"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Document",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{apiUrl}}/documents/delete/:id",
+              "host": ["{{apiUrl}}"],
+              "path": ["documents", "delete", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "documentId123",
+                  "description": "Document ID"
+                }
+              ]
+            },
+            "description": "Delete document"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "💳 Payments",
+      "item": [
+        {
+          "name": "Create Payment Intent",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 2999,\n  \"currency\": \"usd\",\n  \"userEmail\": \"john@example.com\",\n  \"packageType\": \"premium\"\n}"
+            },
+            "url": {
+              "raw": "{{apiUrl}}/create-payment-intent",
+              "host": ["{{apiUrl}}"],
+              "path": ["create-payment-intent"]
+            },
+            "description": "Create Stripe payment intent"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Payment Info",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"paymentIntentId\": \"pi_1234567890\",\n  \"status\": \"succeeded\",\n  \"userEmail\": \"john@example.com\",\n  \"amount\": 2999,\n  \"packageType\": \"premium\"\n}"
+            },
+            "url": {
+              "raw": "{{apiUrl}}/payments",
+              "host": ["{{apiUrl}}"],
+              "path": ["payments"]
+            },
+            "description": "Update payment information"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🎥 HMS (100ms)",
+      "item": [
+        {
+          "name": "Generate HMS Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "description": "Authentication token"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"userId123\",\n  \"role\": \"host\",\n  \"roomId\": \"room123\"\n}"
+            },
+            "url": {
+              "raw": "{{apiUrl}}/hms/generate-token",
+              "host": ["{{apiUrl}}"],
+              "path": ["hms", "generate-token"]
+            },
+            "description": "Generate 100ms authentication token for video calls"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ]
+}
