@@ -12,6 +12,7 @@ import appConfig from './config/app.config';
 import databaseConfig from './config/database.config';
 import jwtConfig from './config/jwt.config';
 import emailConfig from './config/email.config';
+import { TeamModule } from './modules/team/team.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import emailConfig from './config/email.config';
     PrismaModule,
     UserModule,
     AuthModule,
+    TeamModule,
     WebSocketModule,
   ],
   controllers: [HealthController, CoreController],
