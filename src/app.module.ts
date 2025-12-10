@@ -13,6 +13,13 @@ import databaseConfig from './config/database.config';
 import jwtConfig from './config/jwt.config';
 import emailConfig from './config/email.config';
 import { TeamModule } from './modules/team/team.module';
+import { BoardModule } from './modules/board/board.module';
+import { DocumentModule } from './modules/document/document.module';
+import { GroupMessageModule } from './modules/groupMessage/groupMessage.module';
+import { HmsModule } from './modules/hms/hms.module';
+import { MessageModule } from './modules/message/message.module';
+import { PaymentModule } from './modules/payment/payment.module';
+import { WebhookModule } from './modules/webhook/webhook.module';
 
 @Module({
   imports: [
@@ -26,6 +33,13 @@ import { TeamModule } from './modules/team/team.module';
     UserModule,
     AuthModule,
     TeamModule,
+    BoardModule,
+    DocumentModule,
+    GroupMessageModule,
+    HmsModule,
+    MessageModule,
+    PaymentModule,
+    WebhookModule,
     WebSocketModule,
   ],
   controllers: [HealthController, CoreController],
