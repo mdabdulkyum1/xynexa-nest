@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { BoardStatus } from '@prisma/client';
 import {
@@ -23,7 +27,9 @@ export class BoardService {
         description: createBoardDto.description,
         teamId: createBoardDto.teamId,
         status: createBoardDto.status || BoardStatus.todo,
-        targetDate: createBoardDto.targetDate ? new Date(createBoardDto.targetDate) : undefined,
+        targetDate: createBoardDto.targetDate
+          ? new Date(createBoardDto.targetDate)
+          : undefined,
       },
       include: {
         members: {
@@ -124,14 +130,22 @@ export class BoardService {
     return this.formatBoardResponse(board);
   }
 
-  async updateBoard(id: string, updateBoardDto: UpdateBoardDto): Promise<BoardResponseDto> {
+  async updateBoard(
+    id: string,
+    updateBoardDto: UpdateBoardDto,
+  ): Promise<BoardResponseDto> {
     const updateData: any = {};
-    
-    if (updateBoardDto.title !== undefined) updateData.title = updateBoardDto.title;
-    if (updateBoardDto.description !== undefined) updateData.description = updateBoardDto.description;
-    if (updateBoardDto.status !== undefined) updateData.status = updateBoardDto.status;
+
+    if (updateBoardDto.title !== undefined)
+      updateData.title = updateBoardDto.title;
+    if (updateBoardDto.description !== undefined)
+      updateData.description = updateBoardDto.description;
+    if (updateBoardDto.status !== undefined)
+      updateData.status = updateBoardDto.status;
     if (updateBoardDto.targetDate !== undefined) {
-      updateData.targetDate = updateBoardDto.targetDate ? new Date(updateBoardDto.targetDate) : null;
+      updateData.targetDate = updateBoardDto.targetDate
+        ? new Date(updateBoardDto.targetDate)
+        : null;
     }
 
     const board = await this.prisma.board.update({
@@ -185,17 +199,19 @@ export class BoardService {
 
   async deleteBoard(id: string): Promise<{ message: string }> {
     const board = await this.prisma.board.findUnique({ where: { id } });
-    
+
     if (!board) {
       throw new NotFoundException('Board not found');
     }
 
     await this.prisma.board.delete({ where: { id } });
-    
+
     return { message: 'Board deleted successfully' };
   }
 
-  async addMemberToBoard(addMemberDto: AddMemberToBoardDto): Promise<BoardResponseDto> {
+  async addMemberToBoard(
+    addMemberDto: AddMemberToBoardDto,
+  ): Promise<BoardResponseDto> {
     const board = await this.prisma.board.findUnique({
       where: { id: addMemberDto.boardId },
       include: { members: true },
@@ -230,7 +246,9 @@ export class BoardService {
     return this.getBoardById(addMemberDto.boardId);
   }
 
-  async addCommentToBoard(addCommentDto: AddCommentToBoardDto): Promise<BoardResponseDto> {
+  async addCommentToBoard(
+    addCommentDto: AddCommentToBoardDto,
+  ): Promise<BoardResponseDto> {
     const board = await this.prisma.board.findUnique({
       where: { id: addCommentDto.boardId },
     });
@@ -250,7 +268,9 @@ export class BoardService {
     return this.getBoardById(addCommentDto.boardId);
   }
 
-  async addAttachmentToBoard(addAttachmentDto: AddAttachmentToBoardDto): Promise<BoardResponseDto> {
+  async addAttachmentToBoard(
+    addAttachmentDto: AddAttachmentToBoardDto,
+  ): Promise<BoardResponseDto> {
     const board = await this.prisma.board.findUnique({
       where: { id: addAttachmentDto.boardId },
     });
@@ -271,7 +291,10 @@ export class BoardService {
     return this.getBoardById(addAttachmentDto.boardId);
   }
 
-  async updateBoardStatus(boardId: string, updateStatusDto: UpdateBoardStatusDto): Promise<BoardResponseDto> {
+  async updateBoardStatus(
+    boardId: string,
+    updateStatusDto: UpdateBoardStatusDto,
+  ): Promise<BoardResponseDto> {
     const board = await this.prisma.board.update({
       where: { id: boardId },
       data: { status: updateStatusDto.status },
@@ -342,12 +365,12 @@ export class BoardService {
       orderBy: { createdAt: 'desc' },
     });
 
-    return boards.map(board => this.formatBoardResponse(board));
+    return boards.map((board) => this.formatBoardResponse(board));
   }
 
   async getBoardsByUserEmail(email: string): Promise<BoardResponseDto[]> {
     const user = await this.prisma.user.findUnique({ where: { email } });
-    
+
     if (!user) {
       throw new NotFoundException('User not found');
     }
@@ -390,12 +413,14 @@ export class BoardService {
       },
     });
 
-    return boards.map(board => this.formatBoardResponse(board));
+    return boards.map((board) => this.formatBoardResponse(board));
   }
 
-  async getUserOverallAndTeamTaskSummary(email: string): Promise<BoardSummaryDto> {
+  async getUserOverallAndTeamTaskSummary(
+    email: string,
+  ): Promise<BoardSummaryDto> {
     const user = await this.prisma.user.findUnique({ where: { email } });
-    
+
     if (!user) {
       throw new NotFoundException('User not found');
     }
@@ -413,9 +438,15 @@ export class BoardService {
 
     // Calculate overall summary
     const overallTotalTasks = userBoards.length;
-    const overallTodoTasks = userBoards.filter(board => board.status === BoardStatus.todo).length;
-    const overallInProgressTasks = userBoards.filter(board => board.status === BoardStatus.in_progress).length;
-    const overallDoneTasks = userBoards.filter(board => board.status === BoardStatus.done).length;
+    const overallTodoTasks = userBoards.filter(
+      (board) => board.status === BoardStatus.todo,
+    ).length;
+    const overallInProgressTasks = userBoards.filter(
+      (board) => board.status === BoardStatus.in_progress,
+    ).length;
+    const overallDoneTasks = userBoards.filter(
+      (board) => board.status === BoardStatus.done,
+    ).length;
 
     // Get teams where user is member or creator
     const teams = await this.prisma.team.findMany({
@@ -437,7 +468,7 @@ export class BoardService {
       },
     });
 
-    const teamSummaries = teams.map(team => ({
+    const teamSummaries = teams.map((team) => ({
       teamName: team.name,
       teamId: team.id,
       totalMembers: team.members.length,
@@ -499,4 +530,19 @@ export class BoardService {
       })),
     };
   }
+  async updateStatus(boardId: string, newStatus: string) {
+    return this.prisma.board.update({
+      where: { id: boardId },
+      data: { status: newStatus },
+      include: {
+        members: {
+          select: {
+            id: true,
+            email: true,
+          },
+        },
+      },
+    });
+  }
+
 }

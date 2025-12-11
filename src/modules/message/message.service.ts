@@ -35,4 +35,33 @@ export class MessageService {
     // Implementation will be added later
     throw new NotImplementedException('Message deletion not implemented yet');
   }
+
+  async create(payload: {
+    senderId: string;
+    receiverId: string;
+    text: string;
+    read: boolean;
+  }) {
+    return this.prisma.message.create({
+      data: {
+        senderId: payload.senderId,
+        receiverId: payload.receiverId,
+        text: payload.text,
+        read: payload.read,
+      },
+    });
+  }
+
+  async markRead(messageId: string) {
+    return this.prisma.message.update({
+      where: { id: messageId },
+      data: {
+        read: true, // Use the property directly
+      },
+    });
+  }
+
+  // async createGroupMessage(data: any) {
+  //   return this.prisma.groupMessage.create({ data });
+  // }
 }

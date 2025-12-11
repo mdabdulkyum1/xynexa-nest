@@ -12,6 +12,7 @@ export class CreateMessageDto {
   @IsMongoId()
   @IsNotEmpty()
   receiverId!: string;
+  read?: boolean;
 }
 
 export class UpdateMessageDto {

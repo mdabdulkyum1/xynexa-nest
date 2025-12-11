@@ -3,7 +3,6 @@ import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from './prisma/prisma.module';
 import { UserModule } from './modules/user/user.module';
 import { AuthModule } from './modules/auth/auth.module';
-import { WebSocketModule } from './modules/websocket/websocket.module';
 import { KeepAliveService } from './common/keepAlive/keep-alive.service';
 import { CoreModule } from './core/core.module';
 import { HealthController } from './health/health.controller';
@@ -20,6 +19,7 @@ import { HmsModule } from './modules/hms/hms.module';
 import { MessageModule } from './modules/message/message.module';
 import { PaymentModule } from './modules/payment/payment.module';
 import { WebhookModule } from './modules/webhook/webhook.module';
+import { WebsocketModule } from './modules/websocket/websocket.module';
 
 @Module({
   imports: [
@@ -40,7 +40,7 @@ import { WebhookModule } from './modules/webhook/webhook.module';
     MessageModule,
     PaymentModule,
     WebhookModule,
-    WebSocketModule,
+    WebsocketModule,
   ],
   controllers: [HealthController, CoreController],
   providers: [KeepAliveService],
