@@ -9,10 +9,6 @@ import {
 export class RegisterDto {
   @IsString()
   @IsNotEmpty()
-  clerkId: string;
-
-  @IsString()
-  @IsNotEmpty()
   firstName: string;
 
   @IsString()
