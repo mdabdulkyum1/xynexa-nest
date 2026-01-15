@@ -1,4 +1,10 @@
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+  IsEmail,
+  IsMongoId,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 export class CreateDocumentDto {
   @IsString()
@@ -12,6 +18,14 @@ export class CreateDocumentDto {
   @IsString()
   @IsOptional()
   description?: string;
+
+  @IsEmail()
+  @IsNotEmpty()
+  docCreatorEmail!: string;
+
+  @IsMongoId()
+  @IsNotEmpty()
+  docCreatorId!: string;
 }
 
 export class UpdateDocumentDto {
@@ -33,6 +47,8 @@ export class DocumentResponseDto {
   title!: string;
   content?: string;
   description?: string;
+  docCreatorEmail!: string;
+  docCreatorId!: string;
   createdAt!: Date;
   updatedAt!: Date;
 }

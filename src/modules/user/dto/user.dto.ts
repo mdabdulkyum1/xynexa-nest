@@ -12,10 +12,6 @@ import { Role } from '../../../common/decorators/roles.decorator';
 export class CreateUserDto {
   @IsString()
   @IsNotEmpty()
-  clerkId: string;
-
-  @IsString()
-  @IsNotEmpty()
   firstName: string;
 
   @IsString()

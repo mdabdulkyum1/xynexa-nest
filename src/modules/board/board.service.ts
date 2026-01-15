@@ -4,7 +4,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { BoardStatus } from '@prisma/client';
+import { BoardStatus, Board } from '@prisma/client';
 import {
   CreateBoardDto,
   UpdateBoardDto,
@@ -15,6 +15,12 @@ import {
   UpdateBoardStatusDto,
   BoardSummaryDto,
 } from './dto/board.dto';
+
+type BoardWithRelations = Board & {
+  members: any[];
+  comments: any[];
+  attachments?: any[];
+};
 
 @Injectable()
 export class BoardService {
@@ -486,7 +492,7 @@ export class BoardService {
     };
   }
 
-  private formatBoardResponse(board: any): BoardResponseDto {
+  private formatBoardResponse(board: BoardWithRelations): BoardResponseDto {
     return {
       id: board.id,
       title: board.title,
@@ -530,19 +536,17 @@ export class BoardService {
       })),
     };
   }
-  async updateStatus(boardId: string, newStatus: string) {
+  async updateStatus(boardId: string, newStatus: BoardStatus | string) {
     return this.prisma.board.update({
       where: { id: boardId },
-      data: { status: newStatus },
+      data: { status: newStatus as BoardStatus },
       include: {
         members: {
           select: {
             id: true,
-            email: true,
           },
         },
       },
     });
   }
-
 }

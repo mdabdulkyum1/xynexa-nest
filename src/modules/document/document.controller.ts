@@ -1,13 +1,14 @@
 import {
+  Body,
   Controller,
+  Delete,
   Get,
+  HttpCode,
+  HttpStatus,
+  Param,
   Post,
   Put,
-  Delete,
-  Body,
-  Param,
-  HttpStatus,
-  HttpCode,
+  Query,
 } from '@nestjs/common';
 import { DocumentService } from './document.service';
 import {
@@ -29,8 +30,10 @@ export class DocumentController {
   }
 
   @Get()
-  async getAllDocuments(): Promise<DocumentResponseDto[]> {
-    return this.documentService.getAllDocuments();
+  async getAllDocuments(
+    @Query('email') email?: string,
+  ): Promise<DocumentResponseDto[]> {
+    return this.documentService.getAllDocuments(email);
   }
 
   @Get(':id')

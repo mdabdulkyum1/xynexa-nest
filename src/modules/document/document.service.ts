@@ -1,5 +1,8 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import { Injectable, NotImplementedException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
   CreateDocumentDto,
@@ -11,33 +14,132 @@ import {
 export class DocumentService {
   constructor(private prisma: PrismaService) {}
 
-  createDocument(
-    _createDocumentDto: CreateDocumentDto,
+  private toResponseDto(document: any): DocumentResponseDto {
+    return {
+      id: document.id,
+      title: document.title,
+      content: document.content,
+      // description is not stored in the DB schema; keep undefined for compatibility
+      description: undefined,
+      docCreatorEmail: document.docCreatorEmail,
+      docCreatorId: document.docCreatorId,
+      createdAt: document.createdAt,
+      updatedAt: document.updatedAt,
+    };
+  }
+
+  async createDocument(
+    createDocumentDto: CreateDocumentDto,
   ): Promise<DocumentResponseDto> {
-    // Implementation will be added later
-    throw new NotImplementedException('Document creation not implemented yet');
+    try {
+      const document = await this.prisma.document.create({
+        data: {
+          title: createDocumentDto.title,
+          content: createDocumentDto.content ?? '',
+          docCreatorEmail: createDocumentDto.docCreatorEmail,
+          docCreatorId: createDocumentDto.docCreatorId,
+        },
+      });
+
+      return this.toResponseDto(document);
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Error creating document:', error);
+      throw new InternalServerErrorException('Failed to create document');
+    }
   }
 
-  getAllDocuments(): Promise<DocumentResponseDto[]> {
-    // Implementation will be added later
-    throw new NotImplementedException('Get all documents not implemented yet');
+  async getAllDocuments(email?: string): Promise<DocumentResponseDto[]> {
+    try {
+      const where = email ? { docCreatorEmail: email } : undefined;
+
+      const documents = await this.prisma.document.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+      });
+
+      return documents.map((doc) => this.toResponseDto(doc));
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Error fetching documents:', error);
+      throw new InternalServerErrorException('Failed to fetch documents');
+    }
   }
 
-  getDocumentById(_id: string): Promise<DocumentResponseDto> {
-    // Implementation will be added later
-    throw new NotImplementedException('Get document by ID not implemented yet');
+  async getDocumentById(id: string): Promise<DocumentResponseDto> {
+    try {
+      const document = await this.prisma.document.findUnique({
+        where: { id },
+      });
+
+      if (!document) {
+        throw new NotFoundException('Document not found');
+      }
+
+      return this.toResponseDto(document);
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      // eslint-disable-next-line no-console
+      console.error('Error fetching document by ID:', error);
+      throw new InternalServerErrorException('Failed to fetch document');
+    }
   }
 
-  updateDocument(
-    _id: string,
-    _updateDocumentDto: UpdateDocumentDto,
+  async updateDocument(
+    id: string,
+    updateDocumentDto: UpdateDocumentDto,
   ): Promise<DocumentResponseDto> {
-    // Implementation will be added later
-    throw new NotImplementedException('Document update not implemented yet');
+    try {
+      // Only title and content are updatable, to match old behavior
+      const data: any = {};
+      if (updateDocumentDto.title !== undefined) {
+        data.title = updateDocumentDto.title;
+      }
+      if (updateDocumentDto.content !== undefined) {
+        data.content = updateDocumentDto.content;
+      }
+
+      let document;
+      try {
+        document = await this.prisma.document.update({
+          where: { id },
+          data,
+        });
+      } catch {
+        throw new NotFoundException('Document not found');
+      }
+
+      return this.toResponseDto(document);
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      // eslint-disable-next-line no-console
+      console.error('Error updating document:', error);
+      throw new InternalServerErrorException('Failed to update document');
+    }
   }
 
-  deleteDocument(_id: string): Promise<{ message: string }> {
-    // Implementation will be added later
-    throw new NotImplementedException('Document deletion not implemented yet');
+  async deleteDocument(id: string): Promise<{ message: string }> {
+    try {
+      const document = await this.prisma.document.findUnique({ where: { id } });
+
+      if (!document) {
+        throw new NotFoundException('Document not found');
+      }
+
+      await this.prisma.document.delete({ where: { id } });
+
+      return { message: 'Document deleted successfully' };
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      // eslint-disable-next-line no-console
+      console.error('Error deleting document:', error);
+      throw new InternalServerErrorException('Failed to delete document');
+    }
   }
 }

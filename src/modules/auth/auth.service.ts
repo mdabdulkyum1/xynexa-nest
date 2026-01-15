@@ -38,7 +38,6 @@ export class AuthService {
 
     // Create user
     const user = await this.userService.create({
-      clerkId: registerDto.clerkId,
       firstName: registerDto.firstName,
       lastName: registerDto.lastName,
       email: registerDto.email,
