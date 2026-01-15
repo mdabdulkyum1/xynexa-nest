@@ -15,6 +15,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { BoardService } from '../board/board.service';
 import { MessageService } from '../message/message.service';
 import { UserService } from '../user/user.service';
+import { BoardStatus } from '@prisma/client';
 
 interface JoinPayload {
   email: string;
@@ -219,27 +220,15 @@ export class WebsocketGateway
      4. PRIVATE CHAT (userId based)
      ======================= */
   @SubscribeMessage('sendMessage')
-  async handleSendMessage(
+  handleSendMessage(
     @MessageBody() message: PrivateMessagePayload,
     @ConnectedSocket() socket: Socket,
-  ): Promise<void> {
+  ): void {
     const { receiverId } = message;
     if (!receiverId) return;
 
-    // Optionally persist:
-    try {
-      // await to satisfy linter and ensure persistence
-      await this.messageService.create({
-        senderId: message.senderId,
-        receiverId: message.receiverId,
-        text: message.text ?? '',
-      });
-    } catch (err: unknown) {
-      this.logger.error('Error saving message', err as any);
-      // continue to emit even if DB fails (optional)
-    }
-
-    // Emit to receiver room (receiverId should be the room name you use)
+    // Old server just emits, doesn't save in socket handler
+    // Messages are saved via HTTP endpoint if needed
     this.io.to(receiverId).emit('receiveMessage', message);
   }
 
@@ -301,7 +290,7 @@ export class WebsocketGateway
     if (!groupId || !senderId || !newMessage) return;
 
     try {
-      // fetch sender display info
+      // fetch sender display info (same as old server)
       const sender = await this.userService.findById(senderId);
       if (!sender) return;
 
@@ -318,9 +307,8 @@ export class WebsocketGateway
         timestamp: new Date().toISOString(),
       };
 
-      // Optionally save group message with your service (await)
-      // await this.messageService.createGroupMessage({ ... })
-
+      // Old server doesn't save group messages in socket handler
+      // They are saved via HTTP endpoint (sendGroupMessage controller)
       this.io.to(groupId).emit('receiveGroupMessage', populatedMsg);
     } catch (err: unknown) {
       this.logger.error('Error sending group message', err as any);
@@ -338,17 +326,62 @@ export class WebsocketGateway
     if (!boardId) return;
 
     try {
-      const updatedBoard = await this.boardService.updateStatus(boardId, newStatus);
+      // Update board status and get full board with populated members (like old server)
+      const updatedBoard = await this.prisma.board.update({
+        where: { id: boardId },
+        data: { status: newStatus as BoardStatus, updatedAt: new Date() },
+        include: {
+          members: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true,
+                  email: true,
+                  imageUrl: true,
+                },
+              },
+            },
+          },
+          comments: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true,
+                  email: true,
+                  imageUrl: true,
+                },
+              },
+            },
+          },
+          attachments: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true,
+                  email: true,
+                  imageUrl: true,
+                },
+              },
+            },
+          },
+        },
+      });
 
       if (!updatedBoard) return;
 
-      // expect updatedBoard.members to be an array of member objects with `id` or `_id`
-      for (const member of updatedBoard.members as Array<{ id?: string; _id?: string }>) {
-        const memberId = (member.id ?? member._id) as string;
+      // Emit to each member's userId (old server uses member._id.toString())
+      updatedBoard.members.forEach((member) => {
+        const memberId = member.user.id;
         if (memberId) {
           this.io.to(memberId).emit('boardStatusUpdated', updatedBoard);
         }
-      }
+      });
     } catch (err: unknown) {
       this.logger.error('Error updating board status', err as any);
     }
