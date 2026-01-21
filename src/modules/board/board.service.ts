@@ -15,6 +15,7 @@ import {
   UpdateBoardStatusDto,
   BoardSummaryDto,
 } from './dto/board.dto';
+import { EmailService } from '../email/email.service';
 
 type BoardWithRelations = Board & {
   members: any[];
@@ -24,7 +25,10 @@ type BoardWithRelations = Board & {
 
 @Injectable()
 export class BoardService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private emailService: EmailService,
+  ) {}
 
   async createBoard(createBoardDto: CreateBoardDto): Promise<BoardResponseDto> {
     const board = await this.prisma.board.create({
@@ -248,6 +252,9 @@ export class BoardService {
         userId: addMemberDto.userId,
       },
     });
+
+    // Fire-and-forget assignment email
+    void this.sendTaskAssignmentEmail(addMemberDto.boardId, addMemberDto.userId);
 
     return this.getBoardById(addMemberDto.boardId);
   }
@@ -535,6 +542,53 @@ export class BoardService {
         },
       })),
     };
+  }
+  private async sendTaskAssignmentEmail(
+    boardId: string,
+    userId: string,
+  ): Promise<void> {
+    try {
+      const board = await this.prisma.board.findUnique({
+        where: { id: boardId },
+        include: {
+          team: true,
+        },
+      });
+
+      if (!board) return;
+
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          email: true,
+          firstName: true,
+          lastName: true,
+        },
+      });
+
+      if (!user?.email) return;
+
+      const userName = user.firstName || user.lastName || 'there';
+
+      await this.emailService.sendTemplateEmail(user.email, {
+        subject: `You have been assigned a task: ${board.title}`,
+        template: 'task-assigned',
+        data: {
+          userName,
+          taskTitle: board.title,
+          taskDescription: board.description ?? 'No description provided.',
+          status: board.status,
+          teamName: (board as any).team?.name ?? 'Team',
+          targetDate: board.targetDate
+            ? new Date(board.targetDate).toDateString()
+            : 'Not set',
+        },
+      });
+    } catch (error) {
+      // Non-blocking; log and continue
+      // eslint-disable-next-line no-console
+      console.error('Failed to send task assignment email', error);
+    }
   }
   async updateStatus(boardId: string, newStatus: BoardStatus | string) {
     return this.prisma.board.update({

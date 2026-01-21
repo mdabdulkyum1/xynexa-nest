@@ -1,0 +1,28 @@
+{{!-- Task Assignment Email --}}
+<h2 style="margin:0 0 12px 0;">Hi {{userName}},</h2>
+
+<p style="margin:0 0 12px 0;">You have been assigned a new task.</p>
+
+<table style="border-collapse:collapse;width:100%;margin:0 0 16px 0;">
+  <tr>
+    <td style="padding:6px 8px;font-weight:bold;width:120px;">Task</td>
+    <td style="padding:6px 8px;">{{taskTitle}}</td>
+  </tr>
+  <tr>
+    <td style="padding:6px 8px;font-weight:bold;">Team</td>
+    <td style="padding:6px 8px;">{{teamName}}</td>
+  </tr>
+  <tr>
+    <td style="padding:6px 8px;font-weight:bold;">Status</td>
+    <td style="padding:6px 8px;text-transform:capitalize;">{{status}}</td>
+  </tr>
+  <tr>
+    <td style="padding:6px 8px;font-weight:bold;">Target Date</td>
+    <td style="padding:6px 8px;">{{targetDate}}</td>
+  </tr>
+</table>
+
+<p style="margin:0 0 12px 0;">Description:</p>
+<p style="margin:0 0 16px 0;white-space:pre-wrap;">{{taskDescription}}</p>
+
+<p style="margin:0;">Please check your dashboard for more details.</p>
