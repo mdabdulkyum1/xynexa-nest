@@ -1,38 +1,17 @@
 import { registerAs } from '@nestjs/config';
 
 export default registerAs('email', () => ({
-  // Email Provider Configuration
-  provider: process.env.EMAIL_PROVIDER || 'smtp', // 'smtp' | 'sendgrid' | 'mailgun'
-
-  // SMTP Configuration (Gmail, Outlook, etc.)
-  smtp: {
-    host: process.env.SMTP_HOST || 'smtp.gmail.com',
-    port: parseInt(process.env.SMTP_PORT, 10) || 587,
-    secure: process.env.SMTP_SECURE === 'true' || false, // true for 465, false for other ports
-    auth: {
-      user: process.env.SMTP_USER || '',
-      pass: process.env.SMTP_PASS || '', // App password for Gmail
-    },
-    connectionTimeout: parseInt(process.env.SMTP_CONNECTION_TIMEOUT, 10) || 10000,
-    greetingTimeout: parseInt(process.env.SMTP_GREETING_TIMEOUT, 10) || 10000,
-    socketTimeout: parseInt(process.env.SMTP_SOCKET_TIMEOUT, 10) || 20000,
+  // Adoption of user's preferred structure
+  emailSender: {
+    email: process.env.EMAIL || 'hmaitekhang@gmail.com',
+    app_pass: process.env.EMAIL_PASSWORD || '',
+    name: process.env.EMAIL_FROM_NAME || 'Md Abdul Kyum',
   },
 
-  // SendGrid Configuration
-  sendgrid: {
-    apiKey: process.env.SENDGRID_API_KEY || '',
-  },
-
-  // Brevo configuration
-  brevo: {
-    apiKey: process.env.EMAIL_PASSWORD || '',
-    senderEmail: process.env.EMAIL || '',
-  },
-
-  // Default sender information
+  // Fallback for current template system
   from: {
-    name: process.env.EMAIL_FROM_NAME || 'Xynexa',
-    address: process.env.EMAIL_FROM_ADDRESS || 'noreply@xynexa.com',
+    name: process.env.EMAIL_FROM_NAME || 'Md Abdul Kyum',
+    address: process.env.EMAIL || 'hmaitekhang@gmail.com',
   },
 
   // OTP Configuration

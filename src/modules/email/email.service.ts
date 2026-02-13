@@ -3,11 +3,9 @@
 
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import * as nodemailer from 'nodemailer';
 import * as handlebars from 'handlebars';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as sendgrid from '@sendgrid/mail';
 import axios from 'axios';
 
 export interface EmailTemplate {
@@ -26,7 +24,6 @@ export interface EmailOptions {
 @Injectable()
 export class EmailService {
   private readonly logger = new Logger(EmailService.name);
-  private transporter: nodemailer.Transporter;
   private readonly templatesPath: string;
 
   constructor(private configService: ConfigService) {
@@ -34,95 +31,39 @@ export class EmailService {
       process.cwd(),
       'src/modules/email/templates',
     );
-    this.initializeEmailProvider();
-  }
-
-  private initializeEmailProvider() {
-    const provider = this.configService.get<string>('email.provider');
-
-    if (provider === 'sendgrid') {
-      const apiKey = this.configService.get<string>('email.sendgrid.apiKey');
-      if (apiKey) {
-        sendgrid.setApiKey(apiKey);
-        this.logger.log('SendGrid email provider initialized');
-      } else {
-        this.logger.warn('SendGrid API key not provided, falling back to SMTP');
-        this.initializeSMTP();
-      }
-    } else {
-      this.initializeSMTP();
-    }
-  }
-
-  private initializeSMTP() {
-    const smtpConfig = this.configService.get('email.smtp');
-
-    this.transporter = nodemailer.createTransport({
-      host: smtpConfig.host,
-      port: smtpConfig.port,
-      secure: smtpConfig.secure,
-      auth: {
-        user: smtpConfig.auth.user,
-        pass: smtpConfig.auth.pass,
-      },
-      connectionTimeout: smtpConfig.connectionTimeout,
-      greetingTimeout: smtpConfig.greetingTimeout,
-      socketTimeout: smtpConfig.socketTimeout,
-    });
-
-    this.logger.log(
-      `SMTP email provider initialized (Host: ${smtpConfig.host}, Port: ${smtpConfig.port}, Secure: ${smtpConfig.secure})`,
-    );
   }
 
   async sendEmail(options: EmailOptions): Promise<boolean> {
     try {
-      const from = this.configService.get('email.from');
-      const provider = this.configService.get<string>('email.provider');
+      const emailSender = this.configService.get('email.emailSender');
 
-      if (provider === 'sendgrid') {
-        await sendgrid.send({
-          to: options.to,
-          from: `${from.name} <${from.address}>`,
-          subject: options.subject,
-          html: options.html,
-          text: options.text,
-        });
-      } else if (provider === 'brevo') {
-        const brevoConfig = this.configService.get('email.brevo');
-        await axios.post(
-          'https://api.brevo.com/v3/smtp/email',
-          {
-            sender: {
-              name: from.name,
-              email: brevoConfig.senderEmail,
-            },
-            to: [{ email: options.to }],
-            subject: options.subject,
-            htmlContent: options.html,
-            textContent: options.text || this.stripHtml(options.html),
+      await axios.post(
+        'https://api.brevo.com/v3/smtp/email',
+        {
+          sender: {
+            name: emailSender.name,
+            email: emailSender.email,
           },
-          {
-            headers: {
-              'api-key': brevoConfig.apiKey,
-              'Content-Type': 'application/json',
-            },
-          },
-        );
-      } else {
-        await this.transporter.sendMail({
-          from: `${from.name} <${from.address}>`,
-          to: options.to,
+          to: [{ email: options.to }],
           subject: options.subject,
-          html: options.html,
-          text: options.text,
-        });
-      }
+          htmlContent: options.html,
+          textContent: options.text || this.stripHtml(options.html),
+        },
+        {
+          headers: {
+            'api-key': emailSender.app_pass,
+            'Content-Type': 'application/json',
+          },
+        },
+      );
 
-      this.logger.log(`Email sent successfully to ${options.to}`);
+      this.logger.log(`Email sent successfully to ${options.to} via Brevo API`);
       return true;
-    } catch (error) {
-      this.logger.error(`Failed to send email to ${options.to}:`, error);
+    } catch (error: any) {
+      this.logger.error(
+        `💥 Brevo Email API Error for ${options.to}:`,
+        error.response?.data || error.message,
+      );
       return false;
     }
   }
@@ -246,22 +187,8 @@ export class EmailService {
 
   async testEmailConnection(): Promise<boolean> {
     try {
-      const provider = this.configService.get<string>('email.provider');
-
-      if (provider === 'sendgrid') {
-        // SendGrid doesn't have a verify method, so we'll just check if API key is set
-        const apiKey = this.configService.get<string>('email.sendgrid.apiKey');
-        return !!apiKey;
-      } else if (provider === 'brevo') {
-        const apiKey = this.configService.get<string>('email.brevo.apiKey');
-        return !!apiKey;
-      } else {
-        if (this.transporter) {
-          await this.transporter.verify();
-          return true;
-        }
-      }
-      return false;
+      const emailSender = this.configService.get('email.emailSender');
+      return !!emailSender.app_pass;
     } catch (error) {
       this.logger.error('Email connection test failed:', error);
       return false;
