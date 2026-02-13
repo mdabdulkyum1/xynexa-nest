@@ -13,6 +13,9 @@ export default registerAs('email', () => ({
       user: process.env.SMTP_USER || '',
       pass: process.env.SMTP_PASS || '', // App password for Gmail
     },
+    connectionTimeout: parseInt(process.env.SMTP_CONNECTION_TIMEOUT, 10) || 10000,
+    greetingTimeout: parseInt(process.env.SMTP_GREETING_TIMEOUT, 10) || 10000,
+    socketTimeout: parseInt(process.env.SMTP_SOCKET_TIMEOUT, 10) || 20000,
   },
 
   // SendGrid Configuration

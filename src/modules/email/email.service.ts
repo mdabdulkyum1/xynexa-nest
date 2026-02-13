@@ -64,9 +64,14 @@ export class EmailService {
         user: smtpConfig.auth.user,
         pass: smtpConfig.auth.pass,
       },
+      connectionTimeout: smtpConfig.connectionTimeout,
+      greetingTimeout: smtpConfig.greetingTimeout,
+      socketTimeout: smtpConfig.socketTimeout,
     });
 
-    this.logger.log('SMTP email provider initialized');
+    this.logger.log(
+      `SMTP email provider initialized (Host: ${smtpConfig.host}, Port: ${smtpConfig.port}, Secure: ${smtpConfig.secure})`,
+    );
   }
 
   async sendEmail(options: EmailOptions): Promise<boolean> {
