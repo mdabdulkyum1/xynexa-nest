@@ -23,6 +23,12 @@ export default registerAs('email', () => ({
     apiKey: process.env.SENDGRID_API_KEY || '',
   },
 
+  // Brevo configuration
+  brevo: {
+    apiKey: process.env.EMAIL_PASSWORD || '',
+    senderEmail: process.env.EMAIL || '',
+  },
+
   // Default sender information
   from: {
     name: process.env.EMAIL_FROM_NAME || 'Xynexa',

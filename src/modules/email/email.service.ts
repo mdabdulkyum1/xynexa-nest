@@ -8,6 +8,7 @@ import * as handlebars from 'handlebars';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as sendgrid from '@sendgrid/mail';
+import axios from 'axios';
 
 export interface EmailTemplate {
   subject: string;
@@ -87,6 +88,27 @@ export class EmailService {
           html: options.html,
           text: options.text,
         });
+      } else if (provider === 'brevo') {
+        const brevoConfig = this.configService.get('email.brevo');
+        await axios.post(
+          'https://api.brevo.com/v3/smtp/email',
+          {
+            sender: {
+              name: from.name,
+              email: brevoConfig.senderEmail,
+            },
+            to: [{ email: options.to }],
+            subject: options.subject,
+            htmlContent: options.html,
+            textContent: options.text || this.stripHtml(options.html),
+          },
+          {
+            headers: {
+              'api-key': brevoConfig.apiKey,
+              'Content-Type': 'application/json',
+            },
+          },
+        );
       } else {
         await this.transporter.sendMail({
           from: `${from.name} <${from.address}>`,
@@ -229,6 +251,9 @@ export class EmailService {
       if (provider === 'sendgrid') {
         // SendGrid doesn't have a verify method, so we'll just check if API key is set
         const apiKey = this.configService.get<string>('email.sendgrid.apiKey');
+        return !!apiKey;
+      } else if (provider === 'brevo') {
+        const apiKey = this.configService.get<string>('email.brevo.apiKey');
         return !!apiKey;
       } else {
         if (this.transporter) {
