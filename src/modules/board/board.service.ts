@@ -254,7 +254,10 @@ export class BoardService {
     });
 
     // Fire-and-forget assignment email
-    void this.sendTaskAssignmentEmail(addMemberDto.boardId, addMemberDto.userId);
+    void this.sendTaskAssignmentEmail(
+      addMemberDto.boardId,
+      addMemberDto.userId,
+    );
 
     return this.getBoardById(addMemberDto.boardId);
   }
@@ -383,7 +386,7 @@ export class BoardService {
 
   async getBoardsByUserEmail(email: string): Promise<BoardResponseDto[]> {
     const user = await this.prisma.user.findUnique({ where: { email } });
-
+    
     if (!user) {
       throw new NotFoundException('User not found');
     }
@@ -543,6 +546,7 @@ export class BoardService {
       })),
     };
   }
+
   private async sendTaskAssignmentEmail(
     boardId: string,
     userId: string,
@@ -586,10 +590,11 @@ export class BoardService {
       });
     } catch (error) {
       // Non-blocking; log and continue
-      // eslint-disable-next-line no-console
+
       console.error('Failed to send task assignment email', error);
     }
   }
+
   async updateStatus(boardId: string, newStatus: BoardStatus | string) {
     return this.prisma.board.update({
       where: { id: boardId },

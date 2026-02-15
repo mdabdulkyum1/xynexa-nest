@@ -43,7 +43,6 @@ export class DocumentService {
 
       return this.toResponseDto(document);
     } catch (error) {
-      // eslint-disable-next-line no-console
       console.error('Error creating document:', error);
       throw new InternalServerErrorException('Failed to create document');
     }
@@ -60,7 +59,6 @@ export class DocumentService {
 
       return documents.map((doc) => this.toResponseDto(doc));
     } catch (error) {
-      // eslint-disable-next-line no-console
       console.error('Error fetching documents:', error);
       throw new InternalServerErrorException('Failed to fetch documents');
     }
@@ -81,7 +79,7 @@ export class DocumentService {
       if (error instanceof NotFoundException) {
         throw error;
       }
-      // eslint-disable-next-line no-console
+
       console.error('Error fetching document by ID:', error);
       throw new InternalServerErrorException('Failed to fetch document');
     }
@@ -116,7 +114,7 @@ export class DocumentService {
       if (error instanceof NotFoundException) {
         throw error;
       }
-      // eslint-disable-next-line no-console
+
       console.error('Error updating document:', error);
       throw new InternalServerErrorException('Failed to update document');
     }
@@ -137,7 +135,7 @@ export class DocumentService {
       if (error instanceof NotFoundException) {
         throw error;
       }
-      // eslint-disable-next-line no-console
+
       console.error('Error deleting document:', error);
       throw new InternalServerErrorException('Failed to delete document');
     }

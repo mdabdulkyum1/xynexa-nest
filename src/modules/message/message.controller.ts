@@ -8,8 +8,12 @@ import {
   Param,
   HttpStatus,
   HttpCode,
+  Query,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { MessageService } from './message.service';
+import { WebsocketGateway } from '../websocket/websocket.gateway';
 import {
   CreateMessageDto,
   UpdateMessageDto,
@@ -18,21 +22,33 @@ import {
 
 @Controller('messages')
 export class MessageController {
-  constructor(private readonly messageService: MessageService) {}
+  constructor(
+    private readonly messageService: MessageService,
+    @Inject(forwardRef(() => WebsocketGateway))
+    private readonly websocketGateway: WebsocketGateway,
+  ) {}
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
   async createMessage(
     @Body() createMessageDto: CreateMessageDto,
   ): Promise<MessageResponseDto> {
-    return this.messageService.createMessage(createMessageDto);
+    console.log('MessageController received:', createMessageDto);
+    const message = await this.messageService.createMessage(createMessageDto);
+    
+    // Notify receiver via socket
+    // Ensure we are passing the FULL message object which includes the generated ID
+    this.websocketGateway.notifyMessageCreated(message);
+    
+    return message;
   }
 
-  @Get(':userId')
+  @Get(':contactId')
   async getUserMessages(
-    @Param('userId') userId: string,
+    @Param('contactId') contactId: string,
+    @Query('senderId') senderId: string,
   ): Promise<MessageResponseDto[]> {
-    return this.messageService.getUserMessages(userId);
+    return this.messageService.getUserMessages(senderId, contactId);
   }
 
   @Put(':id')

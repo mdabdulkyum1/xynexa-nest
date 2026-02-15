@@ -1,4 +1,3 @@
-
 import {
   WebSocketGateway,
   WebSocketServer,
@@ -56,7 +55,7 @@ interface JoinGroupPayload {
 interface GroupMessagePayload {
   senderId: string;
   groupId: string;
-  newMessage: string;
+  content: string;
   messageId?: string;
 }
 
@@ -82,6 +81,8 @@ export class WebsocketGateway
 
   // email -> socketId
   private onlineEmails = new Map<string, string>();
+  // userId -> socketId (for tracking user connections)
+  private userConnections = new Map<string, string>();
 
   constructor(
     private readonly prisma: PrismaService,
@@ -97,15 +98,17 @@ export class WebsocketGateway
 
   // Called when client connects (no DB ops here to keep connection fast)
   async handleConnection(client: Socket): Promise<void> {
-    this.logger.log(`Client connected: ${client.id}`);
+    this.logger.log(`✅ Client connected: ${client.id}`);
   }
 
   // Called when socket disconnects
   async handleDisconnect(client: Socket): Promise<void> {
-    this.logger.log(`Client disconnected: ${client.id}`);
+    this.logger.log(`❌ Client disconnected: ${client.id}`);
 
     let disconnectedEmail: string | null = null;
+    let disconnectedUserId: string | null = null;
 
+    // Find and remove from email map
     for (const [email, sId] of this.onlineEmails.entries()) {
       if (sId === client.id) {
         disconnectedEmail = email;
@@ -115,21 +118,33 @@ export class WebsocketGateway
       }
     }
 
+    // Find and remove from user connections map
+    for (const [userId, sId] of this.userConnections.entries()) {
+      if (sId === client.id) {
+        disconnectedUserId = userId;
+        this.userConnections.delete(userId);
+        client.leave(userId);
+        break;
+      }
+    }
+
     if (!disconnectedEmail) return;
 
     try {
-      // use userService (which should wrap Prisma calls)
+      // Update user status to offline
       await this.userService.updateByEmail(disconnectedEmail, {
         status: 'Offline',
         lastActive: new Date(),
       });
 
+      // Broadcast offline status immediately
       this.io.emit('user-online-status', {
         email: disconnectedEmail,
         status: 'Offline',
       });
 
       this.broadcastOnlineEmails();
+      this.logger.log(`🔴 User ${disconnectedEmail} is now OFFLINE`);
     } catch (err: unknown) {
       this.logger.error('Error updating user status on disconnect', err as any);
     }
@@ -149,7 +164,7 @@ export class WebsocketGateway
     socket.join(email);
     this.onlineEmails.set(email, socket.id);
 
-    this.logger.log(`User ${email} is ONLINE`);
+    this.logger.log(`🟢 User ${email} is ONLINE`);
 
     try {
       await this.userService.updateByEmail(email, {
@@ -157,10 +172,19 @@ export class WebsocketGateway
         lastActive: new Date(),
       });
 
+      // Broadcast online status immediately to all clients
       this.io.emit('user-online-status', { email, status: 'Online' });
       this.broadcastOnlineEmails();
+
+      // Send acknowledgment to the connecting client
+      socket.emit('join-confirmed', { 
+        email, 
+        status: 'Online',
+        timestamp: new Date().toISOString() 
+      });
     } catch (err: unknown) {
       this.logger.error('Error updating user status to Online', err as any);
+      socket.emit('join-error', { message: 'Failed to update online status' });
     }
   }
 
@@ -178,7 +202,7 @@ export class WebsocketGateway
     this.onlineEmails.delete(email);
     socket.leave(email);
 
-    this.logger.log(`User ${email} went OFFLINE (logout)`);
+    this.logger.log(`🔴 User ${email} went OFFLINE (manual)`);
 
     try {
       await this.userService.updateByEmail(email, {
@@ -186,8 +210,16 @@ export class WebsocketGateway
         lastActive: new Date(),
       });
 
+      // Broadcast offline status immediately
       this.io.emit('user-online-status', { email, status: 'Offline' });
       this.broadcastOnlineEmails();
+
+      // Send acknowledgment
+      socket.emit('offline-confirmed', { 
+        email, 
+        status: 'Offline',
+        timestamp: new Date().toISOString() 
+      });
     } catch (err: unknown) {
       this.logger.error('Error updating user status to Offline', err as any);
     }
@@ -198,12 +230,23 @@ export class WebsocketGateway
      ======================= */
   @SubscribeMessage('joinUserRoom')
   handleJoinUserRoom(
-    @MessageBody() userId: UserId,
+    @MessageBody() payload: { userId: string } | string,
     @ConnectedSocket() socket: Socket,
   ): void {
-    if (!userId) return;
+    // Handle both object and string payload
+    const userId = typeof payload === 'string' ? payload : payload?.userId;
+
+    if (!userId) {
+        this.logger.error(`❌ Join user room failed: Invalid payload ${JSON.stringify(payload)}`);
+        return;
+    }
+
     socket.join(userId);
-    this.logger.log(`User joined private room: ${userId}`);
+    this.userConnections.set(userId, socket.id);
+    this.logger.log(`👤 User joined private room: "${userId}"`);
+    
+    // Send acknowledgment
+    socket.emit('user-room-joined', { userId });
   }
 
   @SubscribeMessage('leaveUserRoom')
@@ -213,23 +256,52 @@ export class WebsocketGateway
   ): void {
     if (!userId) return;
     socket.leave(userId);
-    this.logger.log(`User left private room: ${userId}`);
+    this.userConnections.delete(userId);
+    this.logger.log(`👤 User left private room: ${userId}`);
   }
 
   /* =======================
      4. PRIVATE CHAT (userId based)
      ======================= */
+  
+  // Public method for REST API to trigger event
+  public notifyMessageCreated(message: any): void {
+    const { receiverId } = message;
+    if (!receiverId) return;
+
+    // Emit message to receiver
+    this.io.to(receiverId).emit('receiveMessage', message);
+    this.logger.log(`📨 API Message delivered to receiver: ${receiverId}`);
+  }
+
   @SubscribeMessage('sendMessage')
   handleSendMessage(
     @MessageBody() message: PrivateMessagePayload,
     @ConnectedSocket() socket: Socket,
   ): void {
-    const { receiverId } = message;
+    const { receiverId, senderId } = message;
     if (!receiverId) return;
 
-    // Old server just emits, doesn't save in socket handler
-    // Messages are saved via HTTP endpoint if needed
+    // Emit message to receiver
     this.io.to(receiverId).emit('receiveMessage', message);
+
+    // Check if receiver is online and send delivery confirmation
+    const isReceiverOnline = this.userConnections.has(receiverId);
+    
+    if (isReceiverOnline) {
+   
+      const msgId = (message as any).id || (message as any)._id;
+      
+      socket.emit('message-delivered', { 
+        messageId: msgId,
+        receiverId,
+        deliveredAt: new Date().toISOString()
+      });
+      
+      this.logger.log(`📨 Message delivered to ${receiverId}`);
+    } else {
+      this.logger.log(`📭 Message queued for ${receiverId} (offline)`);
+    }
   }
 
   @SubscribeMessage('typing')
@@ -279,15 +351,19 @@ export class WebsocketGateway
     const { groupId } = payload ?? {};
     if (!groupId) return;
     socket.join(groupId);
-    this.logger.log(`User joined group: ${groupId}`);
+    this.logger.log(`👥 User joined group: ${groupId}`);
   }
 
   @SubscribeMessage('sentGroupMessage')
   async handleSentGroupMessage(
-    @MessageBody() body: GroupMessagePayload,
+    @MessageBody() body: any,
   ): Promise<void> {
-    const { senderId, groupId, newMessage, messageId } = body;
-    if (!groupId || !senderId || !newMessage) return;
+    // Accept both 'content' and 'newMessage' for backward compatibility
+    // xynexa-server uses 'newMessage', xynexa-nest uses 'content'
+    const content = body.content || body.newMessage;
+    const { senderId, groupId, messageId } = body;
+    
+    if (!groupId || !senderId || !content) return;
 
     try {
       // fetch sender display info (same as old server)
@@ -303,8 +379,8 @@ export class WebsocketGateway
           imageUrl: sender.imageUrl,
         },
         groupId,
-        message: newMessage,
-        timestamp: new Date().toISOString(),
+        content: content,
+        createdAt: new Date().toISOString(),
       };
 
       // Old server doesn't save group messages in socket handler
@@ -385,5 +461,13 @@ export class WebsocketGateway
     } catch (err: unknown) {
       this.logger.error('Error updating board status', err as any);
     }
+  }
+
+  /* =======================
+     7. HEARTBEAT / CONNECTION HEALTH
+     ======================= */
+  @SubscribeMessage('heartbeat')
+  handleHeartbeat(@ConnectedSocket() socket: Socket): void {
+    socket.emit('heartbeat-ack', { timestamp: new Date().toISOString() });
   }
 }

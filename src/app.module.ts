@@ -19,6 +19,7 @@ import { HmsModule } from './modules/hms/hms.module';
 import { MessageModule } from './modules/message/message.module';
 import { PaymentModule } from './modules/payment/payment.module';
 import { WebhookModule } from './modules/webhook/webhook.module';
+import { OnlineModule } from './modules/online/online.module';
 import { WebsocketModule } from './modules/websocket/websocket.module';
 
 @Module({
@@ -41,6 +42,7 @@ import { WebsocketModule } from './modules/websocket/websocket.module';
     PaymentModule,
     WebhookModule,
     WebsocketModule,
+    OnlineModule,
   ],
   controllers: [HealthController, CoreController],
   providers: [KeepAliveService],

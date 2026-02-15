@@ -144,11 +144,12 @@ model BoardAttachment {
 // Direct Message model
 model Message {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  senderId   String
-  receiverId String
-  text       String
+  senderId   String   @db.ObjectId
+  receiverId String   @db.ObjectId
+  content    String
   read       Boolean  @default(false)
-  timestamp  DateTime @default(now())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   // Relations (using String IDs for flexibility, as in original schema)
   sender   User @relation("MessageSender", fields: [senderId], references: [id])
@@ -162,8 +163,9 @@ model GroupMessage {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   senderId  String   @db.ObjectId
   groupId   String   @db.ObjectId
-  message   String
-  timestamp DateTime @default(now())
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
   sender User @relation(fields: [senderId], references: [id], onDelete: Cascade)

@@ -13,7 +13,7 @@ async function bootstrap(): Promise<void> {
     new ValidationPipe({
       transform: true,
       whitelist: true,
-      forbidNonWhitelisted: true,
+      forbidNonWhitelisted: false,
     }),
   );
 
@@ -24,6 +24,12 @@ async function bootstrap(): Promise<void> {
 
   // Get port from config
   const port = configService.get<number>('app.port') || 3000;
+
+  // Enable CORS
+  app.enableCors({
+    origin: configService.get<string>('CLIENT_URL') || 'http://localhost:3000',
+    credentials: true,
+  });
 
   await app.listen(port);
 

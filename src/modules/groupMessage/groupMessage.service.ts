@@ -11,34 +11,85 @@ import {
 export class GroupMessageService {
   constructor(private prisma: PrismaService) {}
 
-  createGroupMessage(
-    _createGroupMessageDto: CreateGroupMessageDto,
+  async createGroupMessage(
+    createGroupMessageDto: CreateGroupMessageDto,
   ): Promise<GroupMessageResponseDto> {
-    // Implementation will be added later
-    throw new NotImplementedException(
-      'Group message creation not implemented yet',
-    );
+    const message = await this.prisma.groupMessage.create({
+      data: {
+        senderId: createGroupMessageDto.senderId,
+        groupId: createGroupMessageDto.groupId,
+        content: createGroupMessageDto.content,
+      },
+      include: {
+        sender: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            imageUrl: true,
+          },
+        },
+      },
+    });
+
+    return message as unknown as GroupMessageResponseDto;
   }
 
-  getGroupMessages(_groupId: string): Promise<GroupMessageResponseDto[]> {
-    // Implementation will be added later
-    throw new NotImplementedException('Get group messages not implemented yet');
+  async getGroupMessages(groupId: string): Promise<GroupMessageResponseDto[]> {
+    const messages = await this.prisma.groupMessage.findMany({
+      where: {
+        groupId,
+      },
+      include: {
+        sender: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            imageUrl: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'asc',
+      },
+    });
+
+    return messages as unknown as GroupMessageResponseDto[];
   }
 
-  updateGroupMessage(
-    _id: string,
-    _updateGroupMessageDto: UpdateGroupMessageDto,
+  async updateGroupMessage(
+    id: string,
+    updateGroupMessageDto: UpdateGroupMessageDto,
   ): Promise<GroupMessageResponseDto> {
-    // Implementation will be added later
-    throw new NotImplementedException(
-      'Group message update not implemented yet',
-    );
+    const message = await this.prisma.groupMessage.update({
+      where: { id },
+      data: {
+        content: updateGroupMessageDto.content,
+      },
+      include: {
+        sender: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            imageUrl: true,
+          },
+        },
+      },
+    });
+
+    return message as unknown as GroupMessageResponseDto;
   }
 
-  deleteGroupMessage(_id: string): Promise<{ message: string }> {
-    // Implementation will be added later
-    throw new NotImplementedException(
-      'Group message deletion not implemented yet',
-    );
+  async deleteGroupMessage(id: string): Promise<{ message: string }> {
+    await this.prisma.groupMessage.delete({
+      where: { id },
+    });
+
+    return { message: 'Group message deleted successfully' };
   }
 }

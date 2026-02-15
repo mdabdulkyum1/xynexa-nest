@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
+
 import { Injectable, NotImplementedException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
@@ -11,42 +11,73 @@ import {
 export class MessageService {
   constructor(private prisma: PrismaService) {}
 
-  createMessage(
-    _createMessageDto: CreateMessageDto,
+  async createMessage(
+    createMessageDto: CreateMessageDto,
   ): Promise<MessageResponseDto> {
-    // Implementation will be added later
-    throw new NotImplementedException('Message creation not implemented yet');
+    const message = await this.prisma.message.create({
+      data: {
+        senderId: createMessageDto.senderId,
+        receiverId: createMessageDto.receiverId,
+        content: createMessageDto.content,
+        read: false,
+      },
+    });
+
+    return message as MessageResponseDto;
   }
 
-  getUserMessages(_userId: string): Promise<MessageResponseDto[]> {
-    // Implementation will be added later
-    throw new NotImplementedException('Get user messages not implemented yet');
+  async getUserMessages(
+    userId: string,
+    otherUserId: string,
+  ): Promise<MessageResponseDto[]> {
+    const messages = await this.prisma.message.findMany({
+      where: {
+        OR: [
+          { senderId: userId, receiverId: otherUserId },
+          { senderId: otherUserId, receiverId: userId },
+        ],
+      },
+      orderBy: {
+        createdAt: 'asc',
+      },
+    });
+
+    return messages as MessageResponseDto[];
   }
 
-  updateMessage(
-    _id: string,
-    _updateMessageDto: UpdateMessageDto,
+  async updateMessage(
+    id: string,
+    updateMessageDto: UpdateMessageDto,
   ): Promise<MessageResponseDto> {
-    // Implementation will be added later
-    throw new NotImplementedException('Message update not implemented yet');
+    const message = await this.prisma.message.update({
+      where: { id },
+      data: {
+        content: updateMessageDto.content,
+      },
+    });
+
+    return message as MessageResponseDto;
   }
 
-  deleteMessage(_id: string): Promise<{ message: string }> {
-    // Implementation will be added later
-    throw new NotImplementedException('Message deletion not implemented yet');
+  async deleteMessage(id: string): Promise<{ message: string }> {
+    await this.prisma.message.delete({
+      where: { id },
+    });
+
+    return { message: 'Message deleted successfully' };
   }
 
   async create(payload: {
     senderId: string;
     receiverId: string;
-    text: string;
+    content: string;
     read: boolean;
   }) {
     return this.prisma.message.create({
       data: {
         senderId: payload.senderId,
         receiverId: payload.receiverId,
-        text: payload.text,
+        content: payload.content,
         read: payload.read,
       },
     });
@@ -56,7 +87,7 @@ export class MessageService {
     return this.prisma.message.update({
       where: { id: messageId },
       data: {
-        read: true, // Use the property directly
+        read: true,
       },
     });
   }

@@ -126,8 +126,9 @@ export class HmsMeetGateway
         },
       );
 
-      const roomCode =
-        roomCodeResponse.data.data.find((code: any) => code.enabled)?.code;
+      const roomCode = roomCodeResponse.data.data.find(
+        (code: any) => code.enabled,
+      )?.code;
 
       if (!roomCode) {
         socket.emit('RoomCreationError', 'Failed to generate room code');
@@ -243,4 +244,3 @@ export class HmsMeetGateway
     // await this.messageService.createHmsMessage(messageData);
   }
 }
-
