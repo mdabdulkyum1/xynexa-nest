@@ -47,7 +47,11 @@ export class UserController {
 
   @Get('email/:email')
   async findByEmail(@Param('email') email: string) {
-    return this.userService.findByEmail(email);
+    const user = await this.userService.findByEmail(email);
+    return {
+      message: 'User retrieved successfully',
+      data: user,
+    };
   }
 
   @Get(':id')

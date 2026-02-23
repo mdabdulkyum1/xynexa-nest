@@ -94,10 +94,29 @@ export class UserService {
     email: string,
     data: Prisma.UserUpdateInput,
   ): Promise<User> {
-    return this.prisma.user.update({
-      where: { email },
-      data,
-    });
+    const maxRetries = 3;
+    let delay = 100;
+
+    for (let i = 0; i < maxRetries; i++) {
+      try {
+        return await this.prisma.user.update({
+          where: { email },
+          data,
+        });
+      } catch (error) {
+        if (
+          error instanceof Prisma.PrismaClientKnownRequestError &&
+          error.code === 'P2034' &&
+          i < maxRetries - 1
+        ) {
+          console.warn(`Deadlock detected for ${email}, retrying... (${i + 1})`);
+          await new Promise((resolve) => setTimeout(resolve, delay));
+          delay *= 2; // Exponential backoff
+          continue;
+        }
+        throw error;
+      }
+    }
   }
 
   async findById(id: string) {

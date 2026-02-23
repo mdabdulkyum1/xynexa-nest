@@ -29,7 +29,8 @@ model User {
 
   // Relations
   createdTeams   Team[]          @relation("TeamCreator")
-  teamMemberships TeamMember[]
+  teams          Team[]          @relation("TeamMembers", fields: [teamIds], references: [id])
+  teamIds        String[]        @db.ObjectId
   boardMemberships BoardMember[]
   comments       BoardComment[]
   attachments    BoardAttachment[]
@@ -51,29 +52,16 @@ model Team {
   description String?
   type        TeamType
   creatorId   String   @db.ObjectId
+  memberIds   String[] @db.ObjectId
   createdAt   DateTime @default(now())
 
   // Relations
-  creator      User         @relation("TeamCreator", fields: [creatorId], references: [id])
-  members      TeamMember[]
+  creator      User           @relation("TeamCreator", fields: [creatorId], references: [id])
+  members      User[]         @relation("TeamMembers", fields: [memberIds], references: [id])
   boards       Board[]
   groupMessages GroupMessage[]
 
   @@map("teams")
-}
-
-// Team membership junction table
-model TeamMember {
-  id     String @id @default(auto()) @map("_id") @db.ObjectId
-  teamId String @db.ObjectId
-  userId String @db.ObjectId
-
-  // Relations
-  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([teamId, userId])
-  @@map("team_members")
 }
 
 // Board (Task) model

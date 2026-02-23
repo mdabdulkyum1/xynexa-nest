@@ -35,11 +35,11 @@ export class MessageController {
   ): Promise<MessageResponseDto> {
     console.log('MessageController received:', createMessageDto);
     const message = await this.messageService.createMessage(createMessageDto);
-    
+
     // Notify receiver via socket
     // Ensure we are passing the FULL message object which includes the generated ID
     this.websocketGateway.notifyMessageCreated(message);
-    
+
     return message;
   }
 

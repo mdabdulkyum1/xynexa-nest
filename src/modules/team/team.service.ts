@@ -28,19 +28,11 @@ export class TeamService {
           description: teamDescription,
           type: teamType,
           creatorId: creator,
-          members: {
-            create: {
-              userId: creator,
-            },
-          },
+          memberIds: [creator],
         },
         include: {
           creator: true,
-          members: {
-            include: {
-              user: true,
-            },
-          },
+          members: true,
         },
       });
 
@@ -52,7 +44,7 @@ export class TeamService {
         creatorId: team.creatorId,
         createdAt: team.createdAt,
         creator: team.creator,
-        members: team.members.map((member) => member.user),
+        members: team.members,
       };
     } catch (error) {
       console.error('Error creating team:', error);
@@ -66,11 +58,7 @@ export class TeamService {
         where: { id },
         include: {
           creator: true,
-          members: {
-            include: {
-              user: true,
-            },
-          },
+          members: true,
         },
       });
 
@@ -86,7 +74,7 @@ export class TeamService {
         creatorId: team.creatorId,
         createdAt: team.createdAt,
         creator: team.creator,
-        members: team.members.map((member) => member.user),
+        members: team.members,
       };
     } catch (error) {
       if (error instanceof NotFoundException) {
@@ -104,21 +92,15 @@ export class TeamService {
           OR: [
             { creatorId: userId },
             {
-              members: {
-                some: {
-                  userId: userId,
-                },
+              memberIds: {
+                has: userId,
               },
             },
           ],
         },
         include: {
           creator: true,
-          members: {
-            include: {
-              user: true,
-            },
-          },
+          members: true,
         },
         orderBy: {
           createdAt: 'desc',
@@ -133,7 +115,7 @@ export class TeamService {
         creatorId: team.creatorId,
         createdAt: team.createdAt,
         creator: team.creator,
-        members: team.members.map((member) => member.user),
+        members: team.members,
       }));
     } catch (error) {
       console.error('Error fetching user teams:', error);
@@ -158,10 +140,8 @@ export class TeamService {
           OR: [
             { creatorId: user.id },
             {
-              members: {
-                some: {
-                  userId: user.id,
-                },
+              memberIds: {
+                has: user.id,
               },
             },
           ],
@@ -203,13 +183,15 @@ export class TeamService {
           OR: [
             { creatorId: user.id },
             {
-              members: {
-                some: {
-                  userId: user.id,
-                },
+              memberIds: {
+                has: user.id,
               },
             },
           ],
+        },
+        include: {
+          creator: true,
+          members: true,
         },
         orderBy: {
           createdAt: 'desc',
@@ -223,6 +205,8 @@ export class TeamService {
         type: team.type,
         creatorId: team.creatorId,
         createdAt: team.createdAt,
+        creator: team.creator,
+        members: team.members,
       }));
     } catch (error) {
       if (error instanceof NotFoundException) {
@@ -243,11 +227,7 @@ export class TeamService {
         data: updateTeamDto,
         include: {
           creator: true,
-          members: {
-            include: {
-              user: true,
-            },
-          },
+          members: true,
         },
       });
 
@@ -259,7 +239,7 @@ export class TeamService {
         creatorId: team.creatorId,
         createdAt: team.createdAt,
         creator: team.creator,
-        members: team.members.map((member) => member.user),
+        members: team.members,
       };
     } catch (error) {
       console.error('Error updating team:', error);
@@ -295,9 +275,6 @@ export class TeamService {
       // Check if team exists
       const team = await this.prisma.team.findUnique({
         where: { id: teamId },
-        include: {
-          members: true,
-        },
       });
 
       if (!team) {
@@ -314,25 +291,37 @@ export class TeamService {
       }
 
       // Check if member is already in team
-      const existingMember = team.members.find((m) => m.userId === member.id);
+      const existingMember = team.memberIds.includes(member.id);
       if (existingMember) {
         throw new BadRequestException('Member already in team');
       }
 
       // Add member to team
-      await this.prisma.teamMember.create({
+      const updatedTeam = await this.prisma.team.update({
+        where: { id: teamId },
         data: {
-          teamId,
-          userId: member.id,
+          memberIds: {
+            push: member.id,
+          },
+        },
+        include: {
+          creator: true,
+          members: true,
         },
       });
 
-      // Fetch updated team
-      const updatedTeam = await this.getTeamById(teamId);
-
       return {
         message: 'Member added to team successfully',
-        team: updatedTeam,
+        team: {
+          id: updatedTeam.id,
+          name: updatedTeam.name,
+          description: updatedTeam.description,
+          type: updatedTeam.type,
+          creatorId: updatedTeam.creatorId,
+          createdAt: updatedTeam.createdAt,
+          creator: updatedTeam.creator,
+          members: updatedTeam.members,
+        },
       };
     } catch (error) {
       if (

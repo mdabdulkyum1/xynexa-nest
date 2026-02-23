@@ -20,26 +20,20 @@ export class OnlineService {
     }
 
     // Find teams where this user is a member
-    const teamMemberships = await this.prisma.teamMember.findMany({
-      where: { userId: currentUser.id },
+    const teams = await this.prisma.team.findMany({
+      where: {
+        memberIds: { has: currentUser.id },
+      },
       include: {
-        team: {
-          include: {
-            members: {
-              include: {
-                user: {
-                  select: {
-                    id: true,
-                    firstName: true,
-                    lastName: true,
-                    email: true,
-                    imageUrl: true,
-                    status: true,
-                    lastActive: true,
-                  },
-                },
-              },
-            },
+        members: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            imageUrl: true,
+            status: true,
+            lastActive: true,
           },
         },
       },
@@ -48,20 +42,20 @@ export class OnlineService {
     // Extract all members from these teams and unify them
     const uniqueMembersMap = new Map();
 
-    teamMemberships.forEach((membership) => {
-      membership.team.members.forEach((m) => {
-        if (m.user && m.user.id !== currentUser.id) {
+    teams.forEach((team) => {
+      team.members.forEach((m) => {
+        if (m && m.id !== currentUser.id) {
           const user = {
-            _id: m.user.id, // mapped to _id for frontend compatibility
-            id: m.user.id,
-            firstName: m.user.firstName,
-            lastName: m.user.lastName,
-            email: m.user.email,
-            imageUrl: m.user.imageUrl,
-            status: m.user.status,
-            lastActive: m.user.lastActive,
+            _id: m.id, // mapped to _id for frontend compatibility
+            id: m.id,
+            firstName: m.firstName,
+            lastName: m.lastName,
+            email: m.email,
+            imageUrl: m.imageUrl,
+            status: m.status,
+            lastActive: m.lastActive,
           };
-          uniqueMembersMap.set(m.user.id, user);
+          uniqueMembersMap.set(m.id, user);
         }
       });
     });

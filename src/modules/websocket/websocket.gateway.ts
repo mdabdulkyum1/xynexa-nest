@@ -177,10 +177,10 @@ export class WebsocketGateway
       this.broadcastOnlineEmails();
 
       // Send acknowledgment to the connecting client
-      socket.emit('join-confirmed', { 
-        email, 
+      socket.emit('join-confirmed', {
+        email,
         status: 'Online',
-        timestamp: new Date().toISOString() 
+        timestamp: new Date().toISOString(),
       });
     } catch (err: unknown) {
       this.logger.error('Error updating user status to Online', err as any);
@@ -215,10 +215,10 @@ export class WebsocketGateway
       this.broadcastOnlineEmails();
 
       // Send acknowledgment
-      socket.emit('offline-confirmed', { 
-        email, 
+      socket.emit('offline-confirmed', {
+        email,
         status: 'Offline',
-        timestamp: new Date().toISOString() 
+        timestamp: new Date().toISOString(),
       });
     } catch (err: unknown) {
       this.logger.error('Error updating user status to Offline', err as any);
@@ -237,14 +237,16 @@ export class WebsocketGateway
     const userId = typeof payload === 'string' ? payload : payload?.userId;
 
     if (!userId) {
-        this.logger.error(`❌ Join user room failed: Invalid payload ${JSON.stringify(payload)}`);
-        return;
+      this.logger.error(
+        `❌ Join user room failed: Invalid payload ${JSON.stringify(payload)}`,
+      );
+      return;
     }
 
     socket.join(userId);
     this.userConnections.set(userId, socket.id);
     this.logger.log(`👤 User joined private room: "${userId}"`);
-    
+
     // Send acknowledgment
     socket.emit('user-room-joined', { userId });
   }
@@ -263,7 +265,7 @@ export class WebsocketGateway
   /* =======================
      4. PRIVATE CHAT (userId based)
      ======================= */
-  
+
   // Public method for REST API to trigger event
   public notifyMessageCreated(message: any): void {
     const { receiverId } = message;
@@ -287,17 +289,16 @@ export class WebsocketGateway
 
     // Check if receiver is online and send delivery confirmation
     const isReceiverOnline = this.userConnections.has(receiverId);
-    
+
     if (isReceiverOnline) {
-   
       const msgId = (message as any).id || (message as any)._id;
-      
-      socket.emit('message-delivered', { 
+
+      socket.emit('message-delivered', {
         messageId: msgId,
         receiverId,
-        deliveredAt: new Date().toISOString()
+        deliveredAt: new Date().toISOString(),
       });
-      
+
       this.logger.log(`📨 Message delivered to ${receiverId}`);
     } else {
       this.logger.log(`📭 Message queued for ${receiverId} (offline)`);
@@ -355,14 +356,12 @@ export class WebsocketGateway
   }
 
   @SubscribeMessage('sentGroupMessage')
-  async handleSentGroupMessage(
-    @MessageBody() body: any,
-  ): Promise<void> {
+  async handleSentGroupMessage(@MessageBody() body: any): Promise<void> {
     // Accept both 'content' and 'newMessage' for backward compatibility
     // xynexa-server uses 'newMessage', xynexa-nest uses 'content'
     const content = body.content || body.newMessage;
     const { senderId, groupId, messageId } = body;
-    
+
     if (!groupId || !senderId || !content) return;
 
     try {
@@ -399,13 +398,27 @@ export class WebsocketGateway
     @MessageBody() payload: UpdateTaskStatusPayload,
   ): Promise<void> {
     const { boardId, newStatus } = payload;
-    if (!boardId) return;
+    this.logger.log(`🔄 Updating task ${boardId} status to: ${newStatus}`);
+
+    if (!boardId || !newStatus) {
+      this.logger.error('❌ Missing boardId or newStatus in payload');
+      return;
+    }
 
     try {
-      // Update board status and get full board with populated members (like old server)
+      // Map frontend 'in-progress' to Prisma enum 'in_progress'
+      let normalizedStatus = newStatus;
+      if (newStatus === 'in-progress') {
+        normalizedStatus = 'in_progress';
+      }
+
+      // Update board status and get full board with populated members
       const updatedBoard = await this.prisma.board.update({
         where: { id: boardId },
-        data: { status: newStatus as BoardStatus, updatedAt: new Date() },
+        data: {
+          status: normalizedStatus as BoardStatus,
+          updatedAt: new Date(),
+        },
         include: {
           members: {
             include: {
@@ -432,6 +445,7 @@ export class WebsocketGateway
                 },
               },
             },
+            orderBy: { createdAt: 'desc' },
           },
           attachments: {
             include: {
@@ -445,21 +459,30 @@ export class WebsocketGateway
                 },
               },
             },
+            orderBy: { createdAt: 'desc' },
           },
         },
       });
 
-      if (!updatedBoard) return;
+      if (!updatedBoard) {
+        this.logger.warn(`⚠️ Board ${boardId} not found after update`);
+        return;
+      }
 
-      // Emit to each member's userId (old server uses member._id.toString())
+      this.logger.log(`✅ Board ${boardId} status updated successfully`);
+
+      // Emit to each member's userId
       updatedBoard.members.forEach((member) => {
         const memberId = member.user.id;
         if (memberId) {
           this.io.to(memberId).emit('boardStatusUpdated', updatedBoard);
         }
       });
+
+      // Also emit back to the sender just in case (optional but good for sync)
+      this.io.emit('boardStatusUpdated', updatedBoard);
     } catch (err: unknown) {
-      this.logger.error('Error updating board status', err as any);
+      this.logger.error(`❌ Error updating board status for ${boardId}`, err as any);
     }
   }
 

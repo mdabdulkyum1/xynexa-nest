@@ -470,15 +470,14 @@ export class BoardService {
         OR: [
           { creatorId: user.id },
           {
-            members: {
-              some: {
-                userId: user.id,
-              },
+            memberIds: {
+              has: user.id,
             },
           },
         ],
       },
       include: {
+        creator: true,
         members: true,
         boards: true,
       },
